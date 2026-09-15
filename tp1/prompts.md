@@ -1,118 +1,97 @@
 # Prompts — TP 1
 
-El registro del proceso, en orden. Tres prompts en una sola conversación de Gemini Canvas. El artefacto quedó terminado en el tercero.
+El registro del proceso, en orden.
 
 ---
 
 ## 1 — Prompt inicial
 
 ```
-Construí un captcha de verificación que funciona con una máquina de Galton.
-
-Estructura:
-- <header> con el título "Verificación de seguridad" y el captcha objetivo:
-  3 letras que el usuario tiene que ingresar, generadas al azar al cargar.
-- <main> con el tablero: un triángulo de pegs de 4 filas (1, 2, 3 y 4 pegs por fila) y, debajo, una fila de 5 canaletas. Cada canaleta muestra
-  una letra (A a E, de izquierda a derecha).
-- <footer> con lo ingresado hasta ahora, un <button> "Soltar bola" y un
-  <button> "Borrar último".
-
-Estilo:
-- Estética de captcha viejo: fondo gris claro, bordes duros, tipografía
-  monoespaciada, cero redondeo.
-- Pegs como círculos chicos grises. La bola, un círculo naranja.
-- Las canaletas del centro y las de los bordes se ven iguales: la
-  probabilidad está escrita, no señalizada con color.
-
-Comportamiento:
-- Estado: objetivo (3 letras), ingresados (array de letras, máximo 3),
-  cayendo (booleano que bloquea la interacción durante la animación).
-- Al click en "Soltar bola": si cayendo es false y ingresados tiene menos
-  de 3 letras, arranca la caída. La bola aparece arriba del primer peg y
-  baja fila por fila. En cada fila decide al azar 50/50 izquierda o
-  derecha, y se desplaza media columna hacia ese lado mientras baja una
-  fila. Cada paso dura 220ms. Después de la sexta fila cae en la canaleta
-  correspondiente y su letra se agrega a ingresados.
-- Al click en "Borrar último": saca la última letra de ingresados. No hace
-  falta soltar ninguna bola para borrar.
-- Cuando ingresados llega a 3 letras, comparar con objetivo y mostrar en el
-  footer si la verificación pasó o falló, con un botón para reiniciar que
-  genera un objetivo nuevo y vacía ingresados.
+Quiero un formulario web que corra en un navegador.
 
 Constraints:
 - Un solo archivo HTML, con el CSS en un <style> y el JS en un <script>.
 - Vanilla JS, sin frameworks ni dependencias externas.
-- Los pegs, la bola y las canaletas son elementos del DOM posicionados con
-  CSS. No usar <canvas>: quiero poder ver el estado reflejado en el DOM.
+- Los elementos deben ser objetos de CSS/DOM. No usar <canvas>.
+
+Estética:
+- Página de estilo principios de los '90 (tipo GeoCities/Angelfire): fondo con
+  patrón tileado llamativo, tipografía Times New Roman / Comic Sans, texto con
+  colores muy saturados y distintos por palabra.
+- Layout armado con una <table>, como se hacía en esa época.
+- Texto parpadeante (clase "blink" simulando el <blink> de Netscape) y un
+  <marquee> con una cinta de texto en movimiento.
+- Bordes en relieve estilo Windows 95/98 (outset/inset) en cajas y botones.
+- Cartel de "página en construcción" con rayas diagonales amarillas y negras.
+- Contador de visitas estilo display LED y una insignia de "mejor visto en
+  Netscape Navigator a 800x600".
+- Un separador horizontal en degradé arcoíris.
+
+Comportamiento:
+- El formulario pide Nombre, Email y Fecha de nacimiento.
+- La fecha de nacimiento se ingresa exclusivamente tocando las teclas de un
+  piano de una octava completa (12 teclas: 7 blancas + 5 negras, C a B).
+- Cada tecla suena su nota correspondiente (sintetizada con la Web Audio API,
+  sin archivos de audio) y representa un valor:
+  - C, C#, D, D#, E, F, F#, G, G#, A → dígitos 0 a 9, en ese orden cromático.
+  - A# → Borrar el último dígito ingresado.
+  - B → Confirmar / avanzar.
+- Los dígitos tocados van completando un campo con formato DD/MM/AAAA, pasando
+  automáticamente de día a mes y de mes a año.
+- El botón "Enviar" queda deshabilitado hasta que la fecha ingresada sea válida
+  (día acorde al mes, mes 1-12, año de cuatro dígitos plausible).
+- Al enviar, se reemplaza el formulario por un mensaje de agradecimiento con
+  los datos cargados, sin salir de la estética de la página.
+
+Estructura:
+- Todo en un único archivo. El layout principal usa una <table> centrada.
+- El piano es una fila de 12 elementos posicionados con CSS (teclas blancas y
+  negras superpuestas), no un <canvas>.
+- Estado en JS: los dígitos ingresados, qué segmento de la fecha está activo
+  (día/mes/año), y si el formulario ya fue enviado.
 ```
-
-**Qué intentaba lograr:** el artefacto entero de una sola vez, nombrando las cinco capas — estructura con etiquetas semánticas, estilo, comportamiento expresado como estado, y constraints de empaque.
-
-**Qué devolvió:** el tablero funcionando, con las 4 filas de pegs, las 5 canaletas y la animación de caída. Respetó los tres constraints: un solo archivo, sin dependencias, y pegs y bola como elementos del DOM en lugar de `<canvas>`.
-
-**Qué hice con eso:** lo acepté. Pero el prompt tenía dos ambigüedades que no vi al escribirlo y que el modelo resolvió por su cuenta — están detalladas en el README, porque son lo más interesante de esta entrega.
 
 ---
 
-## 2 — Iterar sobre el estado: reordenar las canaletas
+## 2 — Iterar sobre el envío: la fecha como partitura
 
 ```
-Agregale al captcha dos estados: `letras` (el array de 5 letras de las
-canaletas, hoy fijas en el HTML) y `seleccionada` (el índice de la canaleta
-tocada primero, o null).
+Al hacer click en "Enviar", antes de mostrar el mensaje de agradecimiento,
+reproducí en orden las mismas notas que se fueron tocando en el piano para
+armar la fecha de nacimiento (solo las notas de los dígitos, no las teclas de
+Borrar ni Confirmar) — como si la fecha fuera la partitura de una melodía.
 
-Click en una canaleta con `seleccionada` en null: pasa a ser ese índice y la
-canaleta se marca.
-Click en otra canaleta: se intercambian las dos letras dentro de `letras`,
-`seleccionada` vuelve a null y se sacan las marcas.
-Click en la canaleta ya seleccionada: `seleccionada` vuelve a null sin
-intercambiar nada.
+Cada nota se toca con el mismo timbre sintetizado que ya se usa al presionar
+las teclas, a un tempo fijo. Mientras suena la partitura el botón de enviar
+queda deshabilitado y muestra que se está reproduciendo. Recién cuando termina
+de sonar la última nota se revela el mensaje de agradecimiento con los datos
+cargados.
 
-Dos reglas: mientras `cayendo` es true los clicks en canaletas no hacen
-nada, y los porcentajes pertenecen a la posición, no a la letra — al
-intercambiar, los números no se mueven.
+Si el usuario borra un dígito con A#, la nota correspondiente también se saca
+de la partitura: lo que se reproduce al final es exactamente la melodía de la
+fecha final, no del historial completo de teclas tocadas.
 ```
-
-**Qué intentaba lograr:** devolverle agencia al usuario. Sin esto el captcha es una tragamonedas: mirás caer la bola y no podés hacer nada. Con esto podés poner en el centro la letra que necesitás, que es donde la probabilidad es más alta.
-
-**Por qué está escrito así:** las tres líneas de click son la ida y **dos** vueltas distintas — completar el intercambio, y cancelar la selección. Nombrar solo la ida deja al modelo inventando cómo se sale del estado, y lo más común es que no haya forma de cancelar.
-
-Las dos reglas del final previenen bugs concretos. Sin la primera, reordenar con la bola en el aire la hace aterrizar sobre una letra distinta de la que había cuando soltaste. Sin la segunda, el modelo mueve el porcentaje junto con la letra, porque están renderizados en el mismo elemento — es la confusión clásica entre el estado y su reflejo en el DOM.
-
-**Qué devolvió:** las tres transiciones correctas y las dos reglas respetadas. Los porcentajes se quedaron en su posición al intercambiar.
 
 ---
 
-## 3 — Envolver el captcha en una página anfitriona
+## 3 — Validación sonora y piano que se toca solo
 
 ```
-Envolvé el captcha en una página que sea sobre otra cosa.
+Seguimos iterando sobre el mismo formulario.
 
-La página es un formulario para reservar un turno: <header> con el nombre
-del lugar, <main> con un <form> de nombre, email y fecha y un <button>
-"Reservar turno", <footer> con una línea de contacto.
+1. Validación con melodía: en el momento en que se completan los 8 dígitos de
+   la fecha (día, mes y año llenos), ejecutá una melodía corta que indique si
+   la fecha es válida o no — una progresión ascendente y agradable si es una
+   fecha real, una descendente o disonante si no lo es (por ejemplo, un día
+   que no existe para ese mes). Es una señal sonora aparte de la partitura de
+   la fecha: solo avisa si lo que se cargó tiene sentido como fecha.
 
-Agregá un estado `paso` con tres valores: "formulario", "captcha" y
-"confirmado".
-- Arranca en "formulario": se ve el form, el captcha no.
-- Al enviar el form: `paso` pasa a "captcha", el form se oculta y aparece
-  el tablero de Galton.
-- Si la verificación pasa: `paso` pasa a "confirmado" y se ve el turno
-  reservado con los datos que cargó.
-- Si falla: se queda en "captcha" con un objetivo nuevo.
-
-El captcha no cambia por dentro: mismo tablero, mismos estados, misma
-lógica. Solo deja de ser la página y pasa a ser un paso.
+2. Piano que se toca solo al enviar: mientras se reproduce la partitura de la
+   fecha (al hacer click en "Enviar", como se agregó en el prompt anterior),
+   la tecla del piano correspondiente a cada nota se tiene que "presionar"
+   visualmente en sincro con el sonido — la misma animación de tecla
+   presionada que ya se ve al tocarlas con el mouse, pero disparada por el
+   código en vez de por el click del usuario.
 ```
-
-**Qué intentaba lograr:** que el captcha apareciera donde aparece un captcha de verdad — cortando una tarea que el usuario quiere terminar. Una página que es solo el captcha no frustra a nadie, porque nadie llegó ahí queriendo otra cosa.
-
-**Por qué la última línea:** un pedido estructural como este es el caso donde el modelo tiende a reescribir lo que ya funcionaba, y ahí se pierde el trabajo de los dos prompts anteriores. Decirlo explícito lo evitó.
-
-**Qué devolvió:** los tres pasos funcionando, con el captcha intacto adentro del segundo. El formulario quedó como un centro médico pidiendo turno.
 
 ---
-
-## Conversación completa
-
-Una sola conversación de Gemini Canvas, sin reiniciar el hilo. El artefacto final tiene 828 líneas en un archivo.

@@ -1,22 +1,14 @@
-# Apellido, Nombre
+# Riveros, Tadeo
 
 Repositorio del curso Introducción a la ingeniería de software asistida por Inteligencia Artificial.
-
-Esta es la estructura de referencia. Copiala tal cual en tu propio repositorio y reemplazá el contenido por el tuyo.
-
-Las carpetas `tp1/` y `tp2/` vienen con una entrega resuelta adentro, para que veas hasta dónde llega lo que se espera. La del trabajo final viene en blanco.
 
 ## Entregas
 
 | Entrega | Carpeta | Estado |
 |---------|---------|--------|
-| TP 1 | [tp1/](tp1/) | ejemplo resuelto |
-| TP 2 | [tp2/](tp2/) | ejemplo resuelto |
+| TP 1 | [tp1/](tp1/) | resuelto |
+| TP 2 | [tp2/](tp2/) | próximo |
 | Trabajo Práctico Final | [tp-final/](tp-final/) | en blanco |
-
-## Cómo se usa esta estructura
-
-Este `README.md` de la raíz es el **índice**: dice quién sos y qué hay en cada carpeta. Es lo primero que ve alguien que abre el repositorio, así que tiene que orientar a quien llega sin contexto.
 
 El `README.md` de adentro de cada carpeta es el **informe** de esa entrega: qué construiste, cómo lo dirigiste y cómo se ejecuta.
 

@@ -1,12 +1,14 @@
-# TP 1 — Captcha de máquina de Galton
+# TP 1 — Ascensor roto
 
-Un formulario de reserva de turno donde la verificación te hace ingresar tres letras soltando bolas en una máquina de Galton. Funciona bien y usarlo es horrible, que era la idea.
+Un ascensor que para poder utilizarlo los pasajeros deben recomponer el tablero para llegar al piso que desean.
 
 ## Cómo se ejecuta
 
 Doble click en `index.html`. Un solo archivo, sin dependencias.
 
 ## Qué me propuse construir
+
+Una bad UI hostil donde cada error te puede alejar más y más del piso al que querés llegar. Usando los pisos habilitados debes hacer sumas y restas para llegar. Pero cuidado una mala ejecución puede crear pisos que antes no existían.
 
 Una bad UI hostil por matemática y no por capricho. No esconde nada —las probabilidades están escritas debajo de cada canaleta— y aun así duele, porque la binomial junta las bolas en el centro y las letras de los bordes salen una vez cada dieciséis. Salió en tres prompts, en una sola conversación de Gemini Canvas.
 
