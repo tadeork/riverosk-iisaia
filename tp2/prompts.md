@@ -1,58 +1,49 @@
 # Prompts — TP 2
 
-El registro del proceso, en orden. Tres prompts en una sola conversación. El contrato quedó terminado en el tercero.
+El registro del proceso, en orden. Una sola conversación con Claude Code (Opus 5.5). En vez de dictar el contrato de una vez, le pedí al modelo que me hiciera las preguntas de a una, y el yaml salió de mis respuestas.
 
 ---
 
-## 1 — Prompt inicial
+## 1 — Pedido inicial
 
 ```
-Necesito un openapi.yaml (3.1) para una API de proyectos y tareas.
-
-recursos:
-  Project   { id, name }
-  Task      { id, title, due_date?, project_id }
-
-endpoints:
-  GET    /projects                      → 200 lista
-  POST   /projects                      → 201 / 400 si falta name
-  GET    /projects/{projectId}/tasks    → 200 lista / 404 si el proyecto no existe
-  POST   /projects/{projectId}/tasks    → 201 / 400 si falta title / 404 si el proyecto no existe
-
-Los schemas de entrada y de salida son distintos: el de salida incluye
-el id que genera el servidor, el de entrada no.
+tengo que completar el TP 2
 ```
 
-**Qué buscaba:** fijar los cuatro endpoints y, sobre todo, la separación entre schema de entrada y de salida. Si no la nombro, el modelo suele reusar un solo schema con el `id` marcado como opcional, y ahí se pierde que el `id` lo genera el servidor y no el cliente.
+**Qué buscaba:** <!-- COMPLETAR -->
 
-Volvió el yaml con los cuatro paths, `components/schemas` con `Project`, `ProjectInput`, `Task` y `TaskInput`, y los códigos pedidos.
+El modelo leyó la consigna en el material del curso, me avisó que lo que había en `tp2/` era el ejemplo de la cátedra y me preguntó dos cosas. Elegí **Torneo** como dominio y **esta conversación** como registro del proceso. Después me tiró un resumen de requisitos y una lista de decisiones abiertas para que escribiera el prompt del contrato.
 
 ---
 
-## 2 — Agregar el borrado
+## 2 — Preguntas de a una
 
 ```
-Agregá DELETE /projects/{projectId}/tasks/{taskId}, que devuelva 204 sin
-cuerpo si borró y 404 si la tarea no existe.
+no me queda claro qué tengo que responder, dame las preguntas de a una para poder completar el tp
 ```
 
-**Qué buscaba:** completar el tercer method. Pedí `204` explícito porque si no lo digo el modelo tiende a devolver `200` con el objeto borrado, que es raro: si lo borraste, no tiene sentido devolverlo.
+**Qué buscaba:** <!-- COMPLETAR -->
 
-Lo agregó bien y no tocó nada de lo anterior, que era la otra cosa que quería comprobar.
+El modelo me fue haciendo preguntas de opción múltiple. Mis respuestas:
 
----
+| # | Pregunta | Respuesta |
+|---|----------|-----------|
+| 1 | Recursos principales | Torneos y partidos (`/tournaments/{tournamentId}/matches`) |
+| 2 | Cómo aparecen los equipos | Como texto (`home_team`, `away_team`) |
+| 3 | Campos del torneo | `name`, `sport`, `start_date`, `end_date` |
+| 4 | Campos obligatorios del torneo | Todos |
+| 5 | Campos del partido | `date`, `home_score` / `away_score`, `venue`, `status` |
+| 6 | Campos obligatorios al crear un partido | Todos (`date`, `venue`, `home_score` / `away_score`, `status`) |
+| 7 | Endpoints | `GET`/`POST /tournaments`, `GET`/`POST .../matches`, `GET .../matches/{matchId}`, `DELETE .../matches/{matchId}` |
+| 8 | Respuesta del `DELETE` | `204` sin cuerpo |
+| 9 | `GET` de partidos de un torneo que no existe | `404` |
+| 10 | Schemas de entrada y salida | Separados |
+| 11 | Cuándo da `400` el `POST` de un partido | Falta un campo obligatorio, o el mismo equipo está dos veces |
 
-## 3 — Sacar project_id del body
-
-```
-En TaskInput sacá project_id. El proyecto ya viene en el path, no tiene
-que viajar también en el body.
-```
-
-**Qué buscaba:** corregir el error que había pasado sin que yo lo notara en el prompt 1. Ver el detalle en el README.
+Con eso el modelo generó `openapi.yaml`: 6 endpoints en 3 paths, con los schemas `Tournament`, `TournamentInput`, `Match` y `MatchInput`. Lo validó con Redocly contra la spec y pasó.
 
 ---
 
 ## Conversación completa
 
-Una sola conversación, sin reiniciar el hilo. El yaml final tiene 5 endpoints repartidos en 3 paths.
+Una sola conversación, sin reiniciar el hilo.

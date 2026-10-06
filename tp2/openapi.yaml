@@ -1,138 +1,191 @@
 openapi: 3.1.0
 info:
-  title: API de proyectos y tareas
-  description: Cada proyecto agrupa tareas. Una tarea no existe fuera de un proyecto.
+  title: API de torneos y partidos
+  description: Cada torneo agrupa partidos. Un partido no existe fuera de un torneo.
   version: 1.0.0
 
 paths:
-  /projects:
+  /tournaments:
     get:
-      summary: Lista todos los proyectos
+      summary: Lista todos los torneos
       responses:
         '200':
-          description: Lista de proyectos
+          description: Lista de torneos
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Project'
+                  $ref: '#/components/schemas/Tournament'
     post:
-      summary: Crea un proyecto
+      summary: Crea un torneo
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProjectInput'
+              $ref: '#/components/schemas/TournamentInput'
       responses:
         '201':
-          description: Proyecto creado
+          description: Torneo creado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Project'
+                $ref: '#/components/schemas/Tournament'
         '400':
-          description: Falta el campo name
+          description: Falta un campo obligatorio (name, sport, start_date o end_date)
 
-  /projects/{projectId}/tasks:
+  /tournaments/{tournamentId}/matches:
     parameters:
-      - name: projectId
+      - name: tournamentId
         in: path
         required: true
         schema:
           type: integer
     get:
-      summary: Lista las tareas de un proyecto
+      summary: Lista los partidos de un torneo
       responses:
         '200':
-          description: Lista de tareas
+          description: Lista de partidos
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Task'
+                  $ref: '#/components/schemas/Match'
         '404':
-          description: El proyecto no existe
+          description: El torneo no existe
     post:
-      summary: Crea una tarea dentro de un proyecto
+      summary: Crea un partido dentro de un torneo
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskInput'
+              $ref: '#/components/schemas/MatchInput'
       responses:
         '201':
-          description: Tarea creada
+          description: Partido creado
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
+                $ref: '#/components/schemas/Match'
         '400':
-          description: Falta el campo title
+          description: Falta un campo obligatorio, o home_team y away_team son el mismo equipo
         '404':
-          description: El proyecto no existe
+          description: El torneo no existe
 
-  /projects/{projectId}/tasks/{taskId}:
+  /tournaments/{tournamentId}/matches/{matchId}:
     parameters:
-      - name: projectId
+      - name: tournamentId
         in: path
         required: true
         schema:
           type: integer
-      - name: taskId
+      - name: matchId
         in: path
         required: true
         schema:
           type: integer
+    get:
+      summary: Devuelve un partido
+      responses:
+        '200':
+          description: El partido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+        '404':
+          description: El torneo o el partido no existen
     delete:
-      summary: Borra una tarea
+      summary: Borra un partido
       responses:
         '204':
-          description: Tarea borrada
+          description: Partido borrado
         '404':
-          description: La tarea no existe
+          description: El torneo o el partido no existen
 
 components:
   schemas:
-    Project:
+    Tournament:
       type: object
-      required: [id, name]
+      required: [id, name, sport, start_date, end_date]
       properties:
         id:
           type: integer
         name:
           type: string
+        sport:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
 
-    ProjectInput:
+    TournamentInput:
       type: object
-      required: [name]
+      required: [name, sport, start_date, end_date]
       properties:
         name:
           type: string
+        sport:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
 
-    Task:
+    Match:
       type: object
-      required: [id, title, project_id]
+      required: [id, tournament_id, home_team, away_team, date, venue, home_score, away_score, status]
       properties:
         id:
           type: integer
-        title:
-          type: string
-        due_date:
-          type: string
-          format: date
-        project_id:
+        tournament_id:
           type: integer
+        home_team:
+          type: string
+        away_team:
+          type: string
+        date:
+          type: string
+          format: date-time
+        venue:
+          type: string
+        home_score:
+          type: integer
+          minimum: 0
+        away_score:
+          type: integer
+          minimum: 0
+        status:
+          type: string
+          enum: [scheduled, played, cancelled]
 
-    TaskInput:
+    MatchInput:
       type: object
-      required: [title]
+      required: [home_team, away_team, date, venue, home_score, away_score, status]
       properties:
-        title:
+        home_team:
           type: string
-        due_date:
+        away_team:
           type: string
-          format: date
+        date:
+          type: string
+          format: date-time
+        venue:
+          type: string
+        home_score:
+          type: integer
+          minimum: 0
+        away_score:
+          type: integer
+          minimum: 0
+        status:
+          type: string
+          enum: [scheduled, played, cancelled]
