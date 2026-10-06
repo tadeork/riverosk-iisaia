@@ -142,7 +142,7 @@ components:
 
     Match:
       type: object
-      required: [id, tournament_id, home_team, away_team, date, venue, home_score, away_score, status]
+      required: [id, tournament_id, home_team, away_team, date, venue, status]
       properties:
         id:
           type: integer
@@ -169,7 +169,7 @@ components:
 
     MatchInput:
       type: object
-      required: [home_team, away_team, date, venue, home_score, away_score, status]
+      required: [home_team, away_team, date, venue, status]
       properties:
         home_team:
           type: string
