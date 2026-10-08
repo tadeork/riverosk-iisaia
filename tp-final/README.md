@@ -6,11 +6,38 @@ Además de lo que pide cada entrega anterior, acá se espera que el repositorio 
 
 ## Cómo se ejecuta
 
-Los pasos para levantarlo desde cero, incluyendo dependencias y variables de entorno.
+Requisitos: Node.js 22.22+ o 24.15+ (lo exige Angular 22) y npm.
+
+Dependencias, una sola vez (desde `tp-final/`):
+
+```bash
+(cd api && npm install)
+(cd web && npm install)
+```
+
+Después, dos terminales, cada una empezando en `tp-final/`:
+
+```bash
+# Terminal 1: API (puerto 3000)
+cd api && npm run dev
+```
+
+```bash
+# Terminal 2: frontend (puerto 4200)
+cd web && npx ng serve
+```
+
+Después abrí http://localhost:4200. El servidor de desarrollo de Angular redirige `/api` a `http://localhost:3000`.
+
+Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `data/scriptorium.db`; el archivo SQLite se crea solo). Tests: `npm test` en `api/` y `npx ng test --watch=false` en `web/`.
 
 ## Arquitectura
 
-Las piezas y cómo se conectan: qué endpoints expone el servidor, qué estructura tienen los datos, qué contrato hay entre la interfaz y el servidor.
+- **API** (`api/`): Express + SQLite (`better-sqlite3`) con validación `zod`. Expone `GET/POST /api/books` y `GET/PATCH/DELETE /api/books/:id`. Filtros por `status` y `q`, y orden con `sort` (`newest`, `oldest`, `title`, `author`), todo en el servidor.
+- **Datos**: una tabla `books` (título, autor, ISBN, páginas, descripción, estado, `pagesRead`, fechas). Las reglas de negocio (estados y progreso) viven en `books.routes.ts`.
+- **Frontend** (`web/`): Angular con componentes standalone y signals. Solo `books.api.ts` hace HTTP; `book-list` guarda la lista en un signal y actualiza en el lugar con las respuestas del servidor.
+- **Contrato**: [api/openapi.yaml](api/openapi.yaml) es la fuente de verdad entre interfaz y servidor. El diseño completo está en el [spec](docs/superpowers/specs/2026-10-07-scriptorium-core-design.md).
+- **Limitación conocida**: la búsqueda y el orden por título/autor ignoran mayúsculas solo para ASCII, así que "Ángel" y "angel" no se consideran iguales.
 
 ## Qué decidí yo
 

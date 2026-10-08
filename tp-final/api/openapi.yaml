@@ -1,0 +1,197 @@
+openapi: 3.1.0
+info:
+  title: Scriptorium API
+  version: 0.1.0
+  description: API de la biblioteca personal Scriptorium. Un solo usuario, sin autenticación.
+servers:
+  - url: /api
+security: []
+paths:
+  /books:
+    get:
+      summary: Lista los libros
+      description: Filtra por estado y texto, y ordena según `sort`. Todos los parámetros son opcionales.
+      operationId: listBooks
+      parameters:
+        - name: status
+          in: query
+          description: Devuelve solo los libros con este estado.
+          schema: { $ref: '#/components/schemas/Status' }
+        - name: q
+          in: query
+          description: Texto a buscar, sin distinguir mayúsculas, en `title`, `author` e `isbn`.
+          schema: { type: string }
+        - name: sort
+          in: query
+          description: Orden del resultado. `newest` es `createdAt` descendente; `title` y `author` van de A a Z.
+          schema:
+            type: string
+            enum: [newest, oldest, title, author]
+            default: newest
+      responses:
+        '200':
+          description: Lista de libros.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Book' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '500': { $ref: '#/components/responses/Internal' }
+    post:
+      summary: Crea un libro
+      description: >
+        `id`, `createdAt` y `updatedAt` los pone el servidor y se ignoran si vienen en el body.
+        Se aplican las mismas reglas de negocio que en PATCH (ver ahí).
+      operationId: createBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookInput' }
+      responses:
+        '201':
+          description: Libro creado.
+          headers:
+            Location:
+              description: URL del libro creado, `/api/books/{id}`.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Book' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '500': { $ref: '#/components/responses/Internal' }
+  /books/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: Devuelve un libro
+      operationId: getBook
+      responses:
+        '200':
+          description: El libro.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Book' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/Internal' }
+    patch:
+      summary: Actualiza un libro de forma parcial
+      description: |
+        Acepta cualquier subconjunto de los campos editables. Un body vacío devuelve 422.
+        Mandar `null` en `isbn`, `pages` o `description` los vacía.
+
+        Reglas de negocio:
+
+        1. Si `status` queda en `read` (al crear o al actualizar), el servidor fija `pagesRead = pages`.
+        2. Si `pages` no está definido, `pagesRead` debe ser 0. Mandar otro valor devuelve 422.
+        3. `pagesRead > pages` o `pagesRead < 0` devuelve 422. El servidor no recorta el valor en silencio.
+        4. Si un PATCH cambia `pages` a un valor menor que el `pagesRead` actual sin mandar un `pagesRead` nuevo, devuelve 422.
+        5. Los campos que maneja el servidor (`id`, `createdAt`, `updatedAt`) se ignoran si vienen en el body.
+      operationId: updateBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookPatch' }
+      responses:
+        '200':
+          description: Libro actualizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Book' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '422': { $ref: '#/components/responses/Validation' }
+        '500': { $ref: '#/components/responses/Internal' }
+    delete:
+      summary: Borra un libro
+      operationId: deleteBook
+      responses:
+        '204':
+          description: Libro borrado, sin body.
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/Internal' }
+components:
+  schemas:
+    Status:
+      type: string
+      enum: [to-read, reading, read, borrowed, not-interested]
+    Book:
+      type: object
+      description: Los campos opcionales se devuelven siempre, con `null` si no tienen valor.
+      required: [id, title, author, isbn, pages, description, status, pagesRead, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string, minLength: 1 }
+        author: { type: string, minLength: 1 }
+        isbn: { type: [string, 'null'] }
+        pages: { type: [integer, 'null'], minimum: 1 }
+        description: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/Status' }
+        pagesRead: { type: integer, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    BookInput:
+      type: object
+      required: [title, author]
+      properties:
+        title: { type: string, minLength: 1 }
+        author: { type: string, minLength: 1 }
+        isbn: { type: [string, 'null'] }
+        pages: { type: [integer, 'null'], minimum: 1 }
+        description: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/Status', default: to-read }
+        pagesRead: { type: integer, minimum: 0, default: 0 }
+    BookPatch:
+      type: object
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1 }
+        author: { type: string, minLength: 1 }
+        isbn: { type: [string, 'null'] }
+        pages: { type: [integer, 'null'], minimum: 1 }
+        description: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/Status' }
+        pagesRead: { type: integer, minimum: 0 }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum: [BAD_REQUEST, NOT_FOUND, VALIDATION_ERROR, INTERNAL]
+            message: { type: string }
+            fields:
+              type: object
+              description: Mensaje por campo. Solo aparece en 422.
+              additionalProperties: { type: string }
+  responses:
+    BadRequest:
+      description: Parámetro de consulta o body JSON inválido (`BAD_REQUEST`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No existe un libro con ese id (`NOT_FOUND`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Validation:
+      description: El body no cumple el esquema o las reglas de negocio (`VALIDATION_ERROR`, con `fields`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Internal:
+      description: Error no controlado (`INTERNAL`). No expone el stack.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
