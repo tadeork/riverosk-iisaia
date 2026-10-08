@@ -59,6 +59,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Book' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '422': { $ref: '#/components/responses/Validation' }
         '500': { $ref: '#/components/responses/Internal' }
   /books/{id}:
@@ -104,6 +105,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Book' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '422': { $ref: '#/components/responses/Validation' }
         '500': { $ref: '#/components/responses/Internal' }
     delete:
@@ -174,7 +176,7 @@ components:
               additionalProperties: { type: string }
   responses:
     BadRequest:
-      description: Parámetro de consulta inválido (`BAD_REQUEST`).
+      description: Parámetro de consulta o body JSON inválido (`BAD_REQUEST`).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }

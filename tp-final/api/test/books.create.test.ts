@@ -81,3 +81,33 @@ test('JSON malformado → 400 BAD_REQUEST', async () => {
   expect(res.status).toBe(400);
   expect(res.body.error.code).toBe('BAD_REQUEST');
 });
+
+test.each([[12.5], ['12'], [-1]])('POST pagesRead=%s → 422 fields.pagesRead', async (pagesRead) => {
+  const res = await makeApp().post('/api/books').send({ title: 'T', author: 'A', pages: 300, pagesRead });
+  expect(res.status).toBe(422);
+  expect(res.body.error.fields.pagesRead).toEqual(expect.any(String));
+});
+
+test('POST con isbn/pages/description null explícitos → 201 con esos null', async () => {
+  const res = await makeApp().post('/api/books')
+    .send({ title: 'T', author: 'A', isbn: null, pages: null, description: null });
+  expect(res.status).toBe(201);
+  expect(res.body).toMatchObject({ isbn: null, pages: null, description: null });
+});
+
+test('POST con body demasiado grande → 400 BAD_REQUEST sin loguear', async () => {
+  const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const res = await makeApp().post('/api/books')
+    .send({ title: 'T', author: 'A', description: 'x'.repeat(200_000) });
+  expect(res.status).toBe(400);
+  expect(res.body.error.code).toBe('BAD_REQUEST');
+  expect(res.body.error.fields).toBeUndefined();
+  expect(spy).not.toHaveBeenCalled();
+  spy.mockRestore();
+});
+
+test('GET /api/inexistente → 404 NOT_FOUND con el shape de error', async () => {
+  const res = await makeApp().get('/api/nope');
+  expect(res.status).toBe(404);
+  expect(res.body.error.code).toBe('NOT_FOUND');
+});
