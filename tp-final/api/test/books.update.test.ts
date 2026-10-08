@@ -104,3 +104,27 @@ test('DELETE inexistente → 404', async () => {
   expect(res.status).toBe(404);
   expect(res.body.error.code).toBe('NOT_FOUND');
 });
+
+test('PATCH pages en libro read sin pagesRead → 200 y pagesRead sigue a pages', async () => {
+  const { api, url } = await setup();
+  await api.patch(url).send({ status: 'read' });
+  const res = await api.patch(url).send({ pages: 250 });
+  expect(res.status).toBe(200);
+  expect(res.body).toMatchObject({ pages: 250, pagesRead: 250, status: 'read' });
+});
+
+test('PATCH status read + pages null con pagesRead 120 → 200 y pagesRead 0', async () => {
+  const { api, url } = await setup();
+  await api.patch(url).send({ pagesRead: 120 });
+  const res = await api.patch(url).send({ status: 'read', pages: null });
+  expect(res.status).toBe(200);
+  expect(res.body).toMatchObject({ pages: null, pagesRead: 0, status: 'read' });
+});
+
+test('PATCH ignora id del body (regla 5)', async () => {
+  const { api, book, url } = await setup();
+  const res = await api.patch(url).send({ id: 'x', title: 'N' });
+  expect(res.status).toBe(200);
+  expect(res.body.id).toBe(book.id);
+  expect(res.body.title).toBe('N');
+});

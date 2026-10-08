@@ -14,14 +14,20 @@ function resolve(current: BookFields | null, input: BookInput): BookFields {
   for (const [k, v] of Object.entries(input)) {
     if (v !== undefined) (merged as Record<string, unknown>)[k] = v;
   }
+  // Regla 1 antes de validar si el input no trae pagesRead: un libro leído sigue a pages.
+  if (merged.status === 'read' && input.pagesRead === undefined) merged.pagesRead = merged.pages ?? 0;
   const { pages, pagesRead } = merged;
   // Regla 4: si el cambio fue en pages (sin pagesRead), el error se atribuye a pages.
-  const field = input.pages !== undefined && input.pagesRead === undefined ? 'pages' : 'pagesRead';
+  const onPages = input.pages !== undefined && input.pagesRead === undefined;
   if (pages === null && pagesRead !== 0) {
-    throw new HttpError(422, 'VALIDATION_ERROR', 'Validation failed', { [field]: 'pagesRead must be 0 when pages is not set' });
+    throw new HttpError(422, 'VALIDATION_ERROR', 'Validation failed', onPages
+      ? { pages: `pages is required while pagesRead > 0 (${pagesRead})` }
+      : { pagesRead: 'pagesRead must be 0 when pages is not set' });
   }
   if (pages !== null && pagesRead > pages) {
-    throw new HttpError(422, 'VALIDATION_ERROR', 'Validation failed', { [field]: 'pagesRead must be ≤ pages' });
+    throw new HttpError(422, 'VALIDATION_ERROR', 'Validation failed', onPages
+      ? { pages: `pages must be ≥ pagesRead (${pagesRead})` }
+      : { pagesRead: 'pagesRead must be ≤ pages' });
   }
   if (merged.status === 'read' && pages !== null) merged.pagesRead = pages;
   return merged;
