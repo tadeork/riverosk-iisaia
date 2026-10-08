@@ -6,17 +6,24 @@ Además de lo que pide cada entrega anterior, acá se espera que el repositorio 
 
 ## Cómo se ejecuta
 
-Requisitos: Node.js 20 o superior y npm.
+Requisitos: Node.js 22.22+ o 24.15+ (lo exige Angular 22) y npm.
+
+Dependencias, una sola vez (desde `tp-final/`):
 
 ```bash
-# 1. Dependencias (en los dos paquetes)
-cd api && npm install
-cd ../web && npm install
+(cd api && npm install)
+(cd web && npm install)
+```
 
-# 2. API (puerto 3000)
+Después, dos terminales, cada una empezando en `tp-final/`:
+
+```bash
+# Terminal 1: API (puerto 3000)
 cd api && npm run dev
+```
 
-# 3. Frontend (puerto 4200, en otra terminal)
+```bash
+# Terminal 2: frontend (puerto 4200)
 cd web && npx ng serve
 ```
 
@@ -30,6 +37,7 @@ Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `da
 - **Datos**: una tabla `books` (título, autor, ISBN, páginas, descripción, estado, `pagesRead`, fechas). Las reglas de negocio (estados y progreso) viven en `books.routes.ts`.
 - **Frontend** (`web/`): Angular con componentes standalone y signals. Solo `books.api.ts` hace HTTP; `book-list` guarda la lista en un signal y actualiza en el lugar con las respuestas del servidor.
 - **Contrato**: [api/openapi.yaml](api/openapi.yaml) es la fuente de verdad entre interfaz y servidor. El diseño completo está en el [spec](docs/superpowers/specs/2026-10-07-scriptorium-core-design.md).
+- **Limitación conocida**: la búsqueda y el orden por título/autor ignoran mayúsculas solo para ASCII, así que "Ángel" y "angel" no se consideran iguales.
 
 ## Qué decidí yo
 

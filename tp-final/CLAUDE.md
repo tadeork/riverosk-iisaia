@@ -53,4 +53,5 @@ web/src/app/
 
 ## Comandos
 
-En `api/` y en `web/`: `npm test` y `npm run dev`.
+- `api/`: `npm test` y `npm run dev`.
+- `web/`: `npx ng test --watch=false` y `npx ng serve` (o `npm start`).
