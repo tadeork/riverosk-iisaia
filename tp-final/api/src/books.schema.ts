@@ -13,7 +13,10 @@ export const bookCreateSchema = z.object({
   pagesRead: z.number().int().min(0).optional(),
 });
 
-export const bookPatchSchema = bookCreateSchema.partial();
+export const bookPatchSchema = bookCreateSchema.partial().refine(
+  (v) => Object.values(v).some((x) => x !== undefined),
+  { message: 'at least one field is required' },
+);
 
 export const listQuerySchema = z.object({
   status: statusSchema.optional(),

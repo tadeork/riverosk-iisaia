@@ -20,6 +20,9 @@ const ORDER_BY: Record<Sort, string> = {
 export function createBooksRepo(db: Database.Database) {
   const insert = db.prepare(`INSERT INTO books (id, title, author, isbn, pages, description, status, pagesRead, createdAt, updatedAt)
     VALUES (@id, @title, @author, @isbn, @pages, @description, @status, @pagesRead, @createdAt, @updatedAt)`);
+  const updateStmt = db.prepare(`UPDATE books SET title=@title, author=@author, isbn=@isbn, pages=@pages,
+    description=@description, status=@status, pagesRead=@pagesRead, updatedAt=@updatedAt WHERE id=@id`);
+  const removeStmt = db.prepare('DELETE FROM books WHERE id = ?');
   const byId = db.prepare('SELECT * FROM books WHERE id = ?');
 
   return {
@@ -48,11 +51,12 @@ export function createBooksRepo(db: Database.Database) {
       insert.run(book);
       return book;
     },
-    update(_id: string, _fields: BookFields): Book | undefined {
-      throw new Error('not implemented (Task 4)');
+    update(id: string, fields: BookFields): Book | undefined {
+      const info = updateStmt.run({ ...fields, id, updatedAt: new Date().toISOString() });
+      return info.changes ? this.get(id) : undefined;
     },
-    remove(_id: string): boolean {
-      throw new Error('not implemented (Task 4)');
+    remove(id: string): boolean {
+      return removeStmt.run(id).changes > 0;
     },
   };
 }
