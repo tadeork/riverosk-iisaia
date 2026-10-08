@@ -120,4 +120,75 @@ describe('BookListComponent', () => {
     );
     httpTesting.verify();
   });
+
+  const buttonByText = (el: HTMLElement, text: string) =>
+    Array.from(el.querySelectorAll('button')).find((b) => b.textContent?.trim() === text) as HTMLButtonElement;
+  const titleInput = (el: HTMLElement) => el.querySelector('#book-title') as HTMLInputElement | null;
+
+  it('reabrir Agregar tras guardar muestra el formulario vacío', async () => {
+    const { fixture, httpTesting, el } = await setup();
+    httpTesting.expectOne('/api/books?sort=newest').flush([]);
+
+    buttonByText(el, '+ Agregar').click();
+    fixture.detectChanges();
+    const title = titleInput(el)!;
+    title.value = 'Rayuela';
+    title.dispatchEvent(new Event('input'));
+    (el.querySelector('#book-author') as HTMLInputElement).value = 'Cortázar';
+    (el.querySelector('#book-author') as HTMLInputElement).dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (el.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    httpTesting.expectOne('/api/books').flush(book({ id: '9', title: 'Rayuela', author: 'Cortázar' }));
+    fixture.detectChanges();
+
+    buttonByText(el, '+ Agregar').click();
+    fixture.detectChanges();
+    expect(titleInput(el)!.value).toBe('');
+    httpTesting.verify();
+  });
+
+  it('cancelar una edición y reabrir el mismo libro descarta los cambios', async () => {
+    const { fixture, httpTesting, el } = await setup();
+    httpTesting.expectOne('/api/books?sort=newest').flush([book({ title: 'Dune' })]);
+    fixture.detectChanges();
+
+    buttonByText(el, 'Editar').click();
+    fixture.detectChanges();
+    const title = titleInput(el)!;
+    title.value = 'Otro título';
+    title.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    buttonByText(el, 'Cancelar').click();
+    fixture.detectChanges();
+
+    buttonByText(el, 'Editar').click();
+    fixture.detectChanges();
+    expect(titleInput(el)!.value).toBe('Dune');
+    httpTesting.verify();
+  });
+
+  it('si el PATCH de estado falla, el selector de la card vuelve al estado original', async () => {
+    const { fixture, httpTesting, el } = await setup();
+    httpTesting.expectOne('/api/books?sort=newest').flush([book({ status: 'reading' })]);
+    fixture.detectChanges();
+
+    const select = el.querySelector('app-book-card select') as HTMLSelectElement;
+    select.value = 'borrowed';
+    select.dispatchEvent(new Event('change'));
+    httpTesting
+      .expectOne('/api/books/1')
+      .flush({ error: { code: 'INTERNAL', message: 'Falló' } }, { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    expect(select.value).toBe('reading');
+    httpTesting.verify();
+  });
+
+  it('el placeholder de búsqueda menciona título, autor o ISBN', async () => {
+    const { httpTesting, el } = await setup();
+    httpTesting.expectOne('/api/books?sort=newest').flush([]);
+    expect(el.querySelector('input[type="search"]')?.getAttribute('placeholder')).toBe(
+      'Buscar por título, autor o ISBN',
+    );
+  });
 });

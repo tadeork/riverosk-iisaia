@@ -31,6 +31,10 @@ export class StatusSelectorComponent {
   }));
 
   protected onChange(event: Event): void {
-    this.statusChange.emit((event.target as HTMLSelectElement).value as Status | '');
+    const select = event.target as HTMLSelectElement;
+    this.statusChange.emit(select.value as Status | '');
+    // El padre re-renderiza con el valor del servidor si el cambio prospera;
+    // si falla, el input no cambió y el select nativo conservaría el valor rechazado.
+    select.value = this.status() ?? '';
   }
 }

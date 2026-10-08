@@ -25,7 +25,7 @@ const SORT_OPTIONS: { value: Sort; label: string }[] = [
     <div class="toolbar">
       <input
         type="search"
-        placeholder="Buscar por título o autor"
+        placeholder="Buscar por título, autor o ISBN"
         aria-label="Buscar"
         [value]="q()"
         (input)="onSearch($event)"
@@ -77,12 +77,14 @@ const SORT_OPTIONS: { value: Sort; label: string }[] = [
       [title]="editing() ? 'Editar libro' : 'Agregar libro'"
       (closed)="closeModal()"
     >
-      <app-book-form
-        [book]="editing() ?? null"
-        [serverErrors]="formErrors()"
-        (save)="onSave($event)"
-        (cancelled)="closeModal()"
-      />
+      @if (editing() !== undefined) {
+        <app-book-form
+          [book]="editing() ?? null"
+          [serverErrors]="formErrors()"
+          (save)="onSave($event)"
+          (cancelled)="closeModal()"
+        />
+      }
     </app-modal-overlay>
   `,
 })
