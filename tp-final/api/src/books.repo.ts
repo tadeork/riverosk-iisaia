@@ -9,15 +9,35 @@ export interface Book {
 }
 export type BookFields = Omit<Book, 'id' | 'createdAt' | 'updatedAt'>;
 
+// Mapa fijo: el input del usuario nunca se interpola en el SQL.
+const ORDER_BY: Record<Sort, string> = {
+  newest: 'createdAt DESC, rowid DESC',
+  oldest: 'createdAt ASC, rowid ASC',
+  title: 'title COLLATE NOCASE ASC, rowid ASC',
+  author: 'author COLLATE NOCASE ASC, rowid ASC',
+};
+
 export function createBooksRepo(db: Database.Database) {
   const insert = db.prepare(`INSERT INTO books (id, title, author, isbn, pages, description, status, pagesRead, createdAt, updatedAt)
     VALUES (@id, @title, @author, @isbn, @pages, @description, @status, @pagesRead, @createdAt, @updatedAt)`);
   const byId = db.prepare('SELECT * FROM books WHERE id = ?');
 
   return {
-    // Task 3 agrega filtros y orden; por ahora devuelve todo, el más nuevo primero.
-    list(_f: { status?: Status; q?: string; sort: Sort }): Book[] {
-      return db.prepare('SELECT * FROM books ORDER BY createdAt DESC, rowid DESC').all() as Book[];
+    list(f: { status?: Status; q?: string; sort: Sort }): Book[] {
+      const where: string[] = [];
+      const params: string[] = [];
+      if (f.status) {
+        where.push('status = ?');
+        params.push(f.status);
+      }
+      if (f.q) {
+        // Escapa \ primero, luego % y _, para que q se busque como texto literal.
+        const like = `%${f.q.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+        where.push(`(title LIKE ? ESCAPE '\\' OR author LIKE ? ESCAPE '\\' OR isbn LIKE ? ESCAPE '\\')`);
+        params.push(like, like, like);
+      }
+      const sql = `SELECT * FROM books${where.length ? ` WHERE ${where.join(' AND ')}` : ''} ORDER BY ${ORDER_BY[f.sort]}`;
+      return db.prepare(sql).all(...params) as Book[];
     },
     get(id: string): Book | undefined {
       return byId.get(id) as Book | undefined;

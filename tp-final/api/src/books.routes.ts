@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type Database from 'better-sqlite3';
 import { createBooksRepo, type BookFields } from './books.repo.js';
-import { bookCreateSchema, type BookInput } from './books.schema.js';
+import { bookCreateSchema, listQuerySchema, type BookInput } from './books.schema.js';
 import { HttpError } from './errors.js';
 
 const DEFAULTS: BookFields = {
@@ -29,8 +29,10 @@ export function booksRouter(db: Database.Database): Router {
   const repo = createBooksRepo(db);
   const router = Router();
 
-  router.get('/', (_req, res) => {
-    res.json(repo.list({ sort: 'newest' }));
+  router.get('/', (req, res) => {
+    const parsed = listQuerySchema.safeParse(req.query);
+    if (!parsed.success) throw new HttpError(400, 'BAD_REQUEST', 'Invalid query parameters');
+    res.json(repo.list(parsed.data));
   });
 
   router.get('/:id', (req, res) => {
