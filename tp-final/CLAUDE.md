@@ -6,6 +6,8 @@ Gestor de biblioteca personal: API Express + SQLite (`api/`) y frontend Angular 
 - Plan: [docs/superpowers/plans/2026-10-07-scriptorium-core.md](docs/superpowers/plans/2026-10-07-scriptorium-core.md)
 - Spec de la búsqueda en Google Books: [docs/superpowers/specs/2026-10-12-google-books-lookup-design.md](docs/superpowers/specs/2026-10-12-google-books-lookup-design.md)
 - Plan de la búsqueda en Google Books: [docs/superpowers/plans/2026-10-12-google-books-lookup.md](docs/superpowers/plans/2026-10-12-google-books-lookup.md)
+- Spec de portadas: [docs/superpowers/specs/2026-10-13-portadas-design.md](docs/superpowers/specs/2026-10-13-portadas-design.md)
+- Plan de portadas: [docs/superpowers/plans/2026-10-13-portadas.md](docs/superpowers/plans/2026-10-13-portadas.md)
 
 ## Decisiones
 
@@ -19,6 +21,7 @@ Gestor de biblioteca personal: API Express + SQLite (`api/`) y frontend Angular 
 | Backend | Express + `better-sqlite3` + `zod`, contrato OpenAPI primero |
 | Filtrado/orden | En el servidor (query params `status`, `q`, `sort`) |
 | Actualización | `PATCH` parcial |
+| Portadas | Solo la URL (`coverUrl`); Google o a mano; placeholder si falla |
 
 Estados: `to-read` (default) | `reading` | `read` | `borrowed` | `not-interested`.
 
@@ -28,7 +31,7 @@ Estados: `to-read` (default) | `reading` | `read` | `borrowed` | `not-interested
 api/
 ├── openapi.yaml        contrato (fuente de verdad)
 └── src/
-    ├── db.ts           abre SQLite (archivo o :memory:) y crea la tabla
+    ├── db.ts           abre SQLite (archivo o :memory:), crea la tabla y migra columnas nuevas
     ├── books.repo.ts   SQL puro: list / get / create / update / remove
     ├── books.schema.ts zod: body de POST/PATCH y query de GET
     ├── books.routes.ts HTTP -> repo; reglas de negocio; mapeo a errores

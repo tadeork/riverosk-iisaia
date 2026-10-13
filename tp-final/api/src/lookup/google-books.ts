@@ -6,6 +6,7 @@ export interface BookCandidate {
   isbn: string | null;
   pages: number | null;
   description: string | null;
+  coverUrl: string | null;
 }
 
 export type BookSearch = (q: string) => Promise<BookCandidate[]>;
@@ -32,6 +33,12 @@ function pickIsbn(identifiers: unknown): string | null {
   return find('ISBN_13') ?? find('ISBN_10');
 }
 
+function pickCover(imageLinks: unknown): string | null {
+  if (!isRecord(imageLinks)) return null;
+  const url = nonEmptyString(imageLinks.thumbnail) ?? nonEmptyString(imageLinks.smallThumbnail);
+  return url ? url.replace(/^http:\/\//, 'https://') : null;
+}
+
 function normalize(item: unknown): BookCandidate | null {
   if (!isRecord(item) || !isRecord(item.volumeInfo)) return null;
   const info = item.volumeInfo;
@@ -47,6 +54,7 @@ function normalize(item: unknown): BookCandidate | null {
     isbn: pickIsbn(info.industryIdentifiers),
     pages: typeof pageCount === 'number' && Number.isInteger(pageCount) && pageCount > 0 ? pageCount : null,
     description: nonEmptyString(info.description),
+    coverUrl: pickCover(info.imageLinks),
   };
 }
 

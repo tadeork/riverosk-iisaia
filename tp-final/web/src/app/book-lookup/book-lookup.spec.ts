@@ -10,6 +10,7 @@ const RAYUELA: BookCandidate = {
   isbn: '9780394752846',
   pages: 736,
   description: null,
+  coverUrl: null,
 };
 
 async function setup() {
@@ -100,6 +101,39 @@ describe('BookLookupComponent', () => {
     expect(items[0].textContent?.trim()).toBe('Rayuela — Julio Cortázar · 736 págs.');
     expect(items[1].textContent?.trim()).toBe('Rayuela — Julio Cortázar');
     expect(items[1].textContent).not.toContain('págs.');
+  });
+
+  it('un candidato con coverUrl muestra la miniatura', async () => {
+    const { httpTesting, fixture, search, candidates } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush([{ ...RAYUELA, coverUrl: 'https://x/t.jpg' }]);
+    fixture.detectChanges();
+    const img = candidates()[0].querySelector('img') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe('https://x/t.jpg');
+    expect(img.getAttribute('alt')).toBe('');
+    expect(img.getAttribute('referrerpolicy')).toBe('no-referrer');
+    expect(candidates()[0].textContent?.trim()).toBe('Rayuela — Julio Cortázar · 736 págs.');
+  });
+
+  it('si la miniatura falla muestra el hueco en lugar de la imagen rota', async () => {
+    const { httpTesting, fixture, search, candidates } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush([{ ...RAYUELA, coverUrl: 'https://x/rota.jpg' }, { ...RAYUELA, coverUrl: 'https://x/ok.jpg' }]);
+    fixture.detectChanges();
+    candidates()[0].querySelector('img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(candidates()[0].querySelector('img')).toBeNull();
+    expect(candidates()[0].querySelector('.thumb-empty')).not.toBeNull();
+    expect(candidates()[1].querySelector('img')?.getAttribute('src')).toBe('https://x/ok.jpg');
+  });
+
+  it('sin coverUrl no hay img pero sí el hueco', async () => {
+    const { httpTesting, fixture, search, candidates } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush([RAYUELA]);
+    fixture.detectChanges();
+    expect(candidates()[0].querySelector('img')).toBeNull();
+    expect(candidates()[0].querySelector('.thumb-empty')).not.toBeNull();
   });
 
   it('sin resultados muestra No se encontraron libros.', async () => {

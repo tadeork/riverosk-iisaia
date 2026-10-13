@@ -65,3 +65,16 @@ button {
   background: #fff;
   color: #2d5016;
 }
+
+.cover-preview {
+  width: 80px;
+  height: 120px;
+  object-fit: cover;
+  border: 2px solid #558b2f;
+}
+
+.preview-error {
+  margin: 0;
+  font-size: 14px;
+  color: #558b2f;
+}

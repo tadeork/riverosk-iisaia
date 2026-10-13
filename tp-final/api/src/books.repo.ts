@@ -5,7 +5,7 @@ export type Status = 'to-read' | 'reading' | 'read' | 'borrowed' | 'not-interest
 export type Sort = 'newest' | 'oldest' | 'title' | 'author';
 export interface Book {
   id: string; title: string; author: string; isbn: string | null; pages: number | null;
-  description: string | null; status: Status; pagesRead: number; createdAt: string; updatedAt: string;
+  description: string | null; coverUrl: string | null; status: Status; pagesRead: number; createdAt: string; updatedAt: string;
 }
 export type BookFields = Omit<Book, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -18,10 +18,10 @@ const ORDER_BY: Record<Sort, string> = {
 };
 
 export function createBooksRepo(db: Database.Database) {
-  const insert = db.prepare(`INSERT INTO books (id, title, author, isbn, pages, description, status, pagesRead, createdAt, updatedAt)
-    VALUES (@id, @title, @author, @isbn, @pages, @description, @status, @pagesRead, @createdAt, @updatedAt)`);
+  const insert = db.prepare(`INSERT INTO books (id, title, author, isbn, pages, description, coverUrl, status, pagesRead, createdAt, updatedAt)
+    VALUES (@id, @title, @author, @isbn, @pages, @description, @coverUrl, @status, @pagesRead, @createdAt, @updatedAt)`);
   const updateStmt = db.prepare(`UPDATE books SET title=@title, author=@author, isbn=@isbn, pages=@pages,
-    description=@description, status=@status, pagesRead=@pagesRead, updatedAt=@updatedAt WHERE id=@id`);
+    description=@description, coverUrl=@coverUrl, status=@status, pagesRead=@pagesRead, updatedAt=@updatedAt WHERE id=@id`);
   const removeStmt = db.prepare('DELETE FROM books WHERE id = ?');
   const byId = db.prepare('SELECT * FROM books WHERE id = ?');
 

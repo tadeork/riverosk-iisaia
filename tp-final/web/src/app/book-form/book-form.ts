@@ -1,4 +1,5 @@
-import { Component, computed, effect, input, output, untracked } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, output, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Book, BookCandidate, BookInput, Status } from '../book.model';
 import { StatusSelectorComponent } from '../status-selector/status-selector';
@@ -73,6 +74,27 @@ const notBlank = (control: AbstractControl) =>
       </div>
 
       <div class="field">
+        <label for="book-cover">URL de portada</label>
+        <input id="book-cover" name="coverUrl" type="url" formControlName="coverUrl" />
+        @if (coverPreview(); as url) {
+          @if (previewFailed()) {
+            <p class="preview-error">No se pudo cargar la imagen</p>
+          } @else {
+            <img
+              class="cover-preview"
+              [src]="url"
+              alt="Vista previa de la portada"
+              referrerpolicy="no-referrer"
+              (error)="previewFailed.set(true)"
+            />
+          }
+        }
+        @if (serverErrors()?.['coverUrl']; as message) {
+          <p class="error">{{ message }}</p>
+        }
+      </div>
+
+      <div class="field">
         <app-status-selector
           [status]="form.controls.status.value"
           (statusChange)="onStatus($event)"
@@ -104,8 +126,14 @@ export class BookFormComponent {
     isbn: new FormControl('', { nonNullable: true }),
     pages: new FormControl<number | null>(null),
     description: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true }),
     status: new FormControl<Status>('to-read', { nonNullable: true }),
   });
+
+  private readonly coverValue = toSignal(this.form.controls.coverUrl.valueChanges, { initialValue: '' });
+  protected readonly coverPreview = computed(() => this.coverValue().trim());
+  /** Se reinicia cuando cambia la URL, para volver a intentar con una corregida. */
+  protected readonly previewFailed = linkedSignal({ source: this.coverPreview, computation: () => false });
 
   protected readonly generalError = computed(() => this.serverErrors()?.['pagesRead'] ?? null);
 
@@ -118,6 +146,7 @@ export class BookFormComponent {
         isbn: book?.isbn ?? '',
         pages: book?.pages ?? null,
         description: book?.description ?? '',
+        coverUrl: book?.coverUrl ?? '',
         status: book?.status ?? 'to-read',
       });
     });
@@ -131,6 +160,7 @@ export class BookFormComponent {
           isbn: candidate.isbn ?? '',
           pages: candidate.pages,
           description: candidate.description ?? '',
+          coverUrl: candidate.coverUrl ?? '',
         });
       }
     });
@@ -151,6 +181,7 @@ export class BookFormComponent {
       author: v.author.trim(),
       isbn: v.isbn.trim() || null,
       description: v.description.trim() || null,
+      coverUrl: v.coverUrl.trim() || null,
       pages: v.pages === null || (v.pages as unknown) === '' ? null : Number(v.pages),
       status: v.status,
     });

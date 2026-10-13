@@ -83,7 +83,7 @@ paths:
       summary: Actualiza un libro de forma parcial
       description: |
         Acepta cualquier subconjunto de los campos editables. Un body vacío devuelve 422.
-        Mandar `null` en `isbn`, `pages` o `description` los vacía.
+        Mandar `null` en `isbn`, `pages`, `description` o `coverUrl` los vacía.
 
         Reglas de negocio:
 
@@ -147,7 +147,7 @@ components:
     Book:
       type: object
       description: Los campos opcionales se devuelven siempre, con `null` si no tienen valor.
-      required: [id, title, author, isbn, pages, description, status, pagesRead, createdAt, updatedAt]
+      required: [id, title, author, isbn, pages, description, coverUrl, status, pagesRead, createdAt, updatedAt]
       properties:
         id: { type: string, format: uuid }
         title: { type: string, minLength: 1 }
@@ -155,6 +155,11 @@ components:
         isbn: { type: [string, 'null'] }
         pages: { type: [integer, 'null'], minimum: 1 }
         description: { type: [string, 'null'] }
+        coverUrl:
+          type: [string, 'null']
+          format: uri
+          maxLength: 2000
+          description: URL de la portada (solo `http` o `https`). Se recorta antes de validar; `null` quita la portada.
         status: { $ref: '#/components/schemas/Status' }
         pagesRead: { type: integer, minimum: 0 }
         createdAt: { type: string, format: date-time }
@@ -168,6 +173,11 @@ components:
         isbn: { type: [string, 'null'] }
         pages: { type: [integer, 'null'], minimum: 1 }
         description: { type: [string, 'null'] }
+        coverUrl:
+          type: [string, 'null']
+          format: uri
+          maxLength: 2000
+          description: URL de la portada (solo `http` o `https`). Se recorta antes de validar; `null` quita la portada.
         status: { $ref: '#/components/schemas/Status', default: to-read }
         pagesRead: { type: integer, minimum: 0, default: 0 }
     BookPatch:
@@ -179,18 +189,27 @@ components:
         isbn: { type: [string, 'null'] }
         pages: { type: [integer, 'null'], minimum: 1 }
         description: { type: [string, 'null'] }
+        coverUrl:
+          type: [string, 'null']
+          format: uri
+          maxLength: 2000
+          description: URL de la portada (solo `http` o `https`). Se recorta antes de validar; `null` quita la portada.
         status: { $ref: '#/components/schemas/Status' }
         pagesRead: { type: integer, minimum: 0 }
     BookCandidate:
       type: object
       description: Libro encontrado en Google Books. Los campos opcionales se devuelven siempre, con `null` si no tienen valor.
-      required: [title, author, isbn, pages, description]
+      required: [title, author, isbn, pages, description, coverUrl]
       properties:
         title: { type: string, minLength: 1 }
         author: { type: string, minLength: 1 }
         isbn: { type: [string, 'null'] }
         pages: { type: [integer, 'null'], minimum: 1 }
         description: { type: [string, 'null'] }
+        coverUrl:
+          type: [string, 'null']
+          format: uri
+          description: Miniatura de Google (`thumbnail`, si no `smallThumbnail`), siempre con `https`.
     Error:
       type: object
       required: [error]

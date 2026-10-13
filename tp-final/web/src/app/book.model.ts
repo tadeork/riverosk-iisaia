@@ -8,6 +8,7 @@ export interface Book {
   isbn: string | null;
   pages: number | null;
   description: string | null;
+  coverUrl: string | null;
   status: Status;
   pagesRead: number;
   createdAt: string;
@@ -15,7 +16,7 @@ export interface Book {
 }
 
 export type BookInput = Partial<
-  Pick<Book, 'title' | 'author' | 'isbn' | 'pages' | 'description' | 'status' | 'pagesRead'>
+  Pick<Book, 'title' | 'author' | 'isbn' | 'pages' | 'description' | 'coverUrl' | 'status' | 'pagesRead'>
 >;
 
 export const STATUS_LABELS: Record<Status, string> = {
@@ -32,4 +33,5 @@ export interface BookCandidate {
   isbn: string | null;
   pages: number | null;
   description: string | null;
+  coverUrl: string | null;
 }

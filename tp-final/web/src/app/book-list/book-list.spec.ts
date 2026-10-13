@@ -11,6 +11,7 @@ const book = (over: Partial<Book>): Book => ({
   isbn: null,
   pages: 500,
   description: null,
+  coverUrl: null,
   status: 'reading',
   pagesRead: 100,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -24,6 +25,7 @@ const CANDIDATE: BookCandidate = {
   isbn: '9780394752846',
   pages: 736,
   description: 'Una novela rompecabezas.',
+  coverUrl: 'https://x/t.jpg',
 };
 
 async function setup() {

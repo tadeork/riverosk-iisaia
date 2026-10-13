@@ -9,6 +9,7 @@ export const bookCreateSchema = z.object({
   isbn: z.string().nullable().optional(),
   pages: z.number().int().min(1).nullable().optional(),
   description: z.string().nullable().optional(),
+  coverUrl: z.string().trim().max(2000).pipe(z.url({ protocol: /^https?$/ })).nullable().optional(),
   status: statusSchema.optional(),
   pagesRead: z.number().int().min(0).optional(),
 });
