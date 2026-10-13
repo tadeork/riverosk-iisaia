@@ -27,9 +27,10 @@ test('normaliza un volumen completo', async () => {
     ],
     pageCount: 736,
     description: 'Novela',
+    imageLinks: { smallThumbnail: 'https://x/s.jpg', thumbnail: 'https://x/t.jpg' },
   }));
   const res = await createGoogleBooksSearch({ fetch: fn })('rayuela');
-  expect(res).toEqual([{ title: 'Rayuela', author: 'Julio Cortázar', isbn: '9788437604572', pages: 736, description: 'Novela' }]);
+  expect(res).toEqual([{ title: 'Rayuela', author: 'Julio Cortázar', isbn: '9788437604572', pages: 736, description: 'Novela', coverUrl: 'https://x/t.jpg' }]);
 });
 
 test('subtítulo y varios autores', async () => {
@@ -137,4 +138,23 @@ test('el error no incluye la key ni la URL', async () => {
   const err = await createGoogleBooksSearch({ fetch: fn, apiKey: 'K123' })('x').catch((e: Error) => e);
   expect((err as Error).message).not.toContain('K123');
   expect((err as Error).message).not.toContain('googleapis');
+});
+
+test('usa smallThumbnail si no hay thumbnail', async () => {
+  const { fn } = fakeFetch(volumes({ ...base, imageLinks: { smallThumbnail: 'https://x/s.jpg' } }));
+  const [c] = await createGoogleBooksSearch({ fetch: fn })('x');
+  expect(c.coverUrl).toBe('https://x/s.jpg');
+});
+
+test('pasa http a https y conserva la query', async () => {
+  const thumbnail = 'http://books.google.com/books/content?id=X&printsec=frontcover&img=1&zoom=1';
+  const { fn } = fakeFetch(volumes({ ...base, imageLinks: { thumbnail } }));
+  const [c] = await createGoogleBooksSearch({ fetch: fn })('x');
+  expect(c.coverUrl).toBe('https://books.google.com/books/content?id=X&printsec=frontcover&img=1&zoom=1');
+});
+
+test('sin imageLinks → coverUrl null', async () => {
+  const { fn } = fakeFetch(volumes(base));
+  const [c] = await createGoogleBooksSearch({ fetch: fn })('x');
+  expect(c.coverUrl).toBeNull();
 });

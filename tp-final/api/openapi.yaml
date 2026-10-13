@@ -199,13 +199,17 @@ components:
     BookCandidate:
       type: object
       description: Libro encontrado en Google Books. Los campos opcionales se devuelven siempre, con `null` si no tienen valor.
-      required: [title, author, isbn, pages, description]
+      required: [title, author, isbn, pages, description, coverUrl]
       properties:
         title: { type: string, minLength: 1 }
         author: { type: string, minLength: 1 }
         isbn: { type: [string, 'null'] }
         pages: { type: [integer, 'null'], minimum: 1 }
         description: { type: [string, 'null'] }
+        coverUrl:
+          type: [string, 'null']
+          format: uri
+          description: Miniatura de Google (`thumbnail`, si no `smallThumbnail`), siempre con `https`.
     Error:
       type: object
       required: [error]

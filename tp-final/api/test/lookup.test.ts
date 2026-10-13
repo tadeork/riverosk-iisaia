@@ -3,7 +3,7 @@ import type { BookCandidate } from '../src/lookup/google-books.js';
 import { makeApp } from './helpers.js';
 
 const CANDIDATE: BookCandidate = {
-  title: 'Rayuela', author: 'Julio Cortázar', isbn: '9788437604572', pages: 600, description: null,
+  title: 'Rayuela', author: 'Julio Cortázar', isbn: '9788437604572', pages: 600, description: null, coverUrl: null,
 };
 
 describe('GET /api/lookup', () => {
