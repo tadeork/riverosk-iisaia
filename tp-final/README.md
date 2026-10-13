@@ -29,7 +29,7 @@ cd web && npx ng serve
 
 Después abrí http://localhost:4200. El servidor de desarrollo de Angular redirige `/api` a `http://localhost:3000`.
 
-Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `data/scriptorium.db`; el archivo SQLite se crea solo). Tests: `npm test` en `api/` y `npx ng test --watch=false` en `web/`.
+Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `data/scriptorium.db`; el archivo SQLite se crea solo). `GOOGLE_BOOKS_API_KEY` es opcional: sin ella se usa la cuota pública de Google, más limitada. Tests: `npm test` en `api/` y `npx ng test --watch=false` en `web/`.
 
 ## Arquitectura
 

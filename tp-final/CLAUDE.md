@@ -4,6 +4,8 @@ Gestor de biblioteca personal: API Express + SQLite (`api/`) y frontend Angular 
 
 - Spec: [docs/superpowers/specs/2026-10-07-scriptorium-core-design.md](docs/superpowers/specs/2026-10-07-scriptorium-core-design.md)
 - Plan: [docs/superpowers/plans/2026-10-07-scriptorium-core.md](docs/superpowers/plans/2026-10-07-scriptorium-core.md)
+- Spec de la búsqueda en Google Books: [docs/superpowers/specs/2026-10-12-google-books-lookup-design.md](docs/superpowers/specs/2026-10-12-google-books-lookup-design.md)
+- Plan de la búsqueda en Google Books: [docs/superpowers/plans/2026-10-12-google-books-lookup.md](docs/superpowers/plans/2026-10-12-google-books-lookup.md)
 
 ## Decisiones
 
@@ -30,7 +32,8 @@ api/
     ├── books.repo.ts   SQL puro: list / get / create / update / remove
     ├── books.schema.ts zod: body de POST/PATCH y query de GET
     ├── books.routes.ts HTTP -> repo; reglas de negocio; mapeo a errores
-    ├── app.ts          crea la app Express recibiendo la db (sin listen)
+    ├── lookup/         búsqueda en Google Books: adaptador y ruta GET /api/lookup
+    ├── app.ts          crea la app Express recibiendo la db y el buscador (sin listen)
     └── server.ts       entrypoint: abre la db en disco y hace listen
 web/src/app/
 ├── books.api.ts        único punto que hace HTTP contra /api
@@ -49,7 +52,7 @@ web/src/app/
 - En el front solo `books.api.ts` hace HTTP.
 - TDD: cada test se ve fallar antes de escribir el código.
 - Commits `TP final: ...`, sin Co-Authored-By.
-- Variables de entorno de la API: `PORT` (default `3000`), `DB_PATH` (default `data/scriptorium.db`).
+- Variables de entorno de la API: `PORT` (default `3000`), `DB_PATH` (default `data/scriptorium.db`), `GOOGLE_BOOKS_API_KEY` (opcional).
 
 ## Comandos
 
