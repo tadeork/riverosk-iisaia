@@ -8,7 +8,7 @@ Repositorio del curso Introducción a la ingeniería de software asistida por In
 |---------|---------|--------|
 | TP 1 | [tp1/](tp1/) | resuelto |
 | TP 2 | [tp2/](tp2/) | resuelto |
-| Trabajo Práctico Final | [tp-final/](tp-final/) | en blanco |
+| Trabajo Práctico Final | [tp-final/](tp-final/) | resuelto |
 
 El `README.md` de adentro de cada carpeta es el **informe** de esa entrega: qué construiste, cómo lo dirigiste y cómo se ejecuta.
 
