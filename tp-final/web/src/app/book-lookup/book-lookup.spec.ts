@@ -1,0 +1,186 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { BookCandidate } from '../book.model';
+import { BookLookupComponent } from './book-lookup';
+
+const RAYUELA: BookCandidate = {
+  title: 'Rayuela',
+  author: 'Julio Cortázar',
+  isbn: '9780394752846',
+  pages: 736,
+  description: null,
+};
+
+async function setup() {
+  await TestBed.configureTestingModule({
+    imports: [BookLookupComponent],
+    providers: [provideHttpClient(), provideHttpClientTesting()],
+  }).compileComponents();
+  const fixture = TestBed.createComponent(BookLookupComponent);
+  const httpTesting = TestBed.inject(HttpTestingController);
+  const el = fixture.nativeElement as HTMLElement;
+  fixture.detectChanges();
+  const input = el.querySelector('#lookup-q') as HTMLInputElement;
+  const button = () =>
+    Array.from(el.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Buscar',
+    ) as HTMLButtonElement;
+  const type = (value: string) => {
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  };
+  const search = (value: string) => {
+    type(value);
+    button().click();
+    fixture.detectChanges();
+  };
+  const candidates = () => Array.from(el.querySelectorAll<HTMLButtonElement>('button.candidate'));
+  return { fixture, httpTesting, el, input, button, type, search, candidates };
+}
+
+const lookupReq = (h: HttpTestingController, q: string) =>
+  h.expectOne((r) => r.url === '/api/lookup' && r.params.get('q') === q);
+
+describe('BookLookupComponent', () => {
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('tiene el label Buscar en Google Books asociado al input', async () => {
+    const { el } = await setup();
+    expect(el.querySelector('label[for="lookup-q"]')?.textContent?.trim()).toBe(
+      'Buscar en Google Books',
+    );
+  });
+
+  it('el input limita el texto a 200 caracteres', async () => {
+    const { input } = await setup();
+    expect(input.maxLength).toBe(200);
+  });
+
+  it('el botón está deshabilitado con el input vacío o con solo espacios', async () => {
+    const { button, type } = await setup();
+    expect(button().disabled).toBe(true);
+    type('   ');
+    expect(button().disabled).toBe(true);
+    type('rayuela');
+    expect(button().disabled).toBe(false);
+  });
+
+  it('buscar con el botón pide /api/lookup?q= con el texto recortado y muestra Buscando…', async () => {
+    const { httpTesting, el, search } = await setup();
+    search('  rayuela ');
+    lookupReq(httpTesting, 'rayuela');
+    expect(el.textContent).toContain('Buscando…');
+    expect(el.querySelector('[role="status"]')?.textContent?.trim()).toBe('Buscando…');
+  });
+
+  it('Enter en el input busca', async () => {
+    const { httpTesting, input, type, fixture } = await setup();
+    type('rayuela');
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+    lookupReq(httpTesting, 'rayuela');
+  });
+
+  it('el botón está deshabilitado mientras carga', async () => {
+    const { httpTesting, button, search } = await setup();
+    search('rayuela');
+    expect(button().disabled).toBe(true);
+    lookupReq(httpTesting, 'rayuela');
+  });
+
+  it('renderiza un botón por candidato', async () => {
+    const { httpTesting, fixture, search, candidates } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush([RAYUELA, { ...RAYUELA, pages: null }]);
+    fixture.detectChanges();
+    const items = candidates();
+    expect(items.length).toBe(2);
+    expect(items[0].textContent?.trim()).toBe('Rayuela — Julio Cortázar · 736 págs.');
+    expect(items[1].textContent?.trim()).toBe('Rayuela — Julio Cortázar');
+    expect(items[1].textContent).not.toContain('págs.');
+  });
+
+  it('sin resultados muestra No se encontraron libros.', async () => {
+    const { httpTesting, fixture, el, search } = await setup();
+    search('zzz');
+    lookupReq(httpTesting, 'zzz').flush([]);
+    fixture.detectChanges();
+    expect(el.querySelector('[role="status"]')?.textContent?.trim()).toBe(
+      'No se encontraron libros.',
+    );
+  });
+
+  it('un 502 muestra el mensaje de Google', async () => {
+    const { httpTesting, fixture, el, search } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush(
+      { error: { code: 'UPSTREAM_ERROR', message: 'x' } },
+      { status: 502, statusText: 'Bad Gateway' },
+    );
+    fixture.detectChanges();
+    expect(el.querySelector('[role="alert"]')?.textContent?.trim()).toBe(
+      'No se pudo consultar Google Books. Probá de nuevo o cargalo a mano.',
+    );
+  });
+
+  it('offline (status 0) muestra Sin conexión con el servidor', async () => {
+    const { httpTesting, fixture, el, search } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').error(new ProgressEvent('error'));
+    fixture.detectChanges();
+    expect(el.querySelector('[role="alert"]')?.textContent?.trim()).toBe(
+      'Sin conexión con el servidor',
+    );
+  });
+
+  it('click en un resultado emite picked con ese candidato, colapsa la lista y muestra el aviso', async () => {
+    const { httpTesting, fixture, el, search, candidates } = await setup();
+    const picked: BookCandidate[] = [];
+    fixture.componentInstance.picked.subscribe((c) => picked.push(c));
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush([RAYUELA]);
+    fixture.detectChanges();
+    candidates()[0].click();
+    fixture.detectChanges();
+    expect(picked).toEqual([RAYUELA]);
+    expect(candidates().length).toBe(0);
+    const notice = el.querySelector('[role="status"]');
+    expect(notice?.textContent).toContain(
+      'Datos cargados desde Google Books: revisalos antes de guardar.',
+    );
+    expect(document.activeElement).toBe(notice);
+  });
+
+  it('una búsqueda nueva cancela la anterior', async () => {
+    const { httpTesting, fixture, search, candidates } = await setup();
+    search('a');
+    const first = lookupReq(httpTesting, 'a');
+    // el botón se deshabilita mientras carga; Enter permite lanzar otra búsqueda
+    const input = fixture.nativeElement.querySelector('#lookup-q') as HTMLInputElement;
+    input.value = 'b';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    fixture.detectChanges();
+    expect(first.cancelled).toBe(true);
+    lookupReq(httpTesting, 'b').flush([{ ...RAYUELA, title: 'B' }]);
+    fixture.detectChanges();
+    expect(candidates().map((c) => c.textContent?.trim())).toEqual(['B — Julio Cortázar · 736 págs.']);
+  });
+
+  it('buscar de nuevo después de elegir oculta el aviso y muestra los resultados nuevos', async () => {
+    const { httpTesting, fixture, el, search, candidates } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush([RAYUELA]);
+    fixture.detectChanges();
+    candidates()[0].click();
+    fixture.detectChanges();
+    search('otro');
+    lookupReq(httpTesting, 'otro').flush([{ ...RAYUELA, title: 'Otro' }]);
+    fixture.detectChanges();
+    expect(el.textContent).not.toContain('Datos cargados desde Google Books');
+    expect(candidates().length).toBe(1);
+    expect(candidates()[0].textContent).toContain('Otro');
+  });
+});

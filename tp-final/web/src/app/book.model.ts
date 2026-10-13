@@ -25,3 +25,11 @@ export const STATUS_LABELS: Record<Status, string> = {
   borrowed: 'Prestado',
   'not-interested': 'No voy a leer',
 };
+
+export interface BookCandidate {
+  title: string;
+  author: string;
+  isbn: string | null;
+  pages: number | null;
+  description: string | null;
+}

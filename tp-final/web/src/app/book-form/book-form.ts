@@ -1,6 +1,6 @@
-import { Component, computed, effect, input, output } from '@angular/core';
+import { Component, computed, effect, input, output, untracked } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Book, BookInput, Status } from '../book.model';
+import { Book, BookCandidate, BookInput, Status } from '../book.model';
 import { StatusSelectorComponent } from '../status-selector/status-selector';
 
 const notBlank = (control: AbstractControl) =>
@@ -93,6 +93,7 @@ const notBlank = (control: AbstractControl) =>
 })
 export class BookFormComponent {
   readonly book = input<Book | null>(null);
+  readonly prefill = input<BookCandidate | null>(null);
   readonly serverErrors = input<Record<string, string> | null>(null);
   readonly save = output<BookInput>();
   readonly cancelled = output<void>();
@@ -119,6 +120,19 @@ export class BookFormComponent {
         description: book?.description ?? '',
         status: book?.status ?? 'to-read',
       });
+    });
+
+    effect(() => {
+      const candidate = this.prefill();
+      if (candidate && !untracked(() => this.book())) {
+        this.form.patchValue({
+          title: candidate.title,
+          author: candidate.author,
+          isbn: candidate.isbn ?? '',
+          pages: candidate.pages,
+          description: candidate.description ?? '',
+        });
+      }
     });
   }
 
