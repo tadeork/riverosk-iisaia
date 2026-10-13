@@ -60,5 +60,7 @@ button {
 }
 
 @media (max-width: 479px) {
-  :host { flex-direction: column; }
+  // En columna, stretch hace que el contenido ocupe todo el ancho de la card.
+  :host { flex-direction: column; align-items: stretch; }
+  .cover { align-self: flex-start; }
 }

@@ -61,8 +61,14 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
               @for (c of items(); track $index) {
                 <li>
                   <button type="button" class="candidate" (click)="pick(c)">
-                    @if (c.coverUrl) {
-                      <img class="thumb" [src]="c.coverUrl" alt="" referrerpolicy="no-referrer" />
+                    @if (c.coverUrl && !failedThumbs().has(c.coverUrl)) {
+                      <img
+                        class="thumb"
+                        [src]="c.coverUrl"
+                        alt=""
+                        referrerpolicy="no-referrer"
+                        (error)="onThumbError(c.coverUrl)"
+                      />
                     } @else {
                       <span class="thumb thumb-empty"></span>
                     }
@@ -135,6 +141,13 @@ export class BookLookupComponent {
     // Enter durante la carga está permitido: switchMap cancela el request anterior.
     this.state.set({ kind: 'loading' });
     this.search$.next(q);
+  }
+
+  /** URLs de miniaturas que no cargaron: se muestra el hueco en lugar de la imagen rota. */
+  protected readonly failedThumbs = signal<ReadonlySet<string>>(new Set());
+
+  protected onThumbError(url: string): void {
+    this.failedThumbs.update((failed) => new Set(failed).add(url));
   }
 
   protected pick(candidate: BookCandidate): void {
