@@ -95,6 +95,7 @@ describe('BookFormComponent', () => {
         isbn: null,
         description: null,
         pages: null,
+        coverUrl: null,
         status: 'to-read',
       },
     ]);
@@ -109,6 +110,7 @@ describe('BookFormComponent', () => {
       isbn: '123',
       description: 'Una novela',
       pages: 320,
+      coverUrl: null,
       status: 'to-read',
     });
   });
@@ -143,14 +145,15 @@ describe('BookFormComponent', () => {
     expect(host.saved).toEqual([]);
   });
 
-  it('un prefill completa los cinco campos y no toca el estado', async () => {
+  it('un prefill completa los seis campos y no toca el estado', async () => {
     const { fixture, el, host, input, type, submit } = await setup();
     const select = el.querySelector('select')!;
     select.value = 'reading';
     select.dispatchEvent(new Event('change', { bubbles: true }));
     await type('title', 'Tipeado');
-    host.prefill.set(CANDIDATE);
+    host.prefill.set({ ...CANDIDATE, coverUrl: 'https://x/t.jpg' });
     await fixture.whenStable();
+    expect(input('coverUrl').value).toBe('https://x/t.jpg');
     expect(input('title').value).toBe('Fundación');
     expect(input('author').value).toBe('Isaac Asimov');
     expect(input('isbn').value).toBe('9780553293357');
@@ -158,21 +161,22 @@ describe('BookFormComponent', () => {
     expect(input('description').value).toBe('Imperio galáctico');
     expect(select.value).toBe('reading');
     await submit();
-    const { coverUrl: _cover, ...withoutCover } = CANDIDATE; // coverUrl entra en Task 4
-    expect(host.saved[0]).toEqual({ ...withoutCover, status: 'reading' });
+    expect(host.saved[0]).toEqual({ ...CANDIDATE, coverUrl: 'https://x/t.jpg', status: 'reading' });
   });
 
   it('un prefill con nulls vacía los opcionales', async () => {
     const { fixture, host, input, type, submit } = await setup();
     await type('isbn', '123');
     await type('description', 'algo');
-    host.prefill.set({ ...CANDIDATE, isbn: null, pages: null, description: null });
+    await type('coverUrl', 'https://vieja/c.jpg');
+    host.prefill.set({ ...CANDIDATE, isbn: null, pages: null, description: null, coverUrl: null });
     await fixture.whenStable();
     expect(input('isbn').value).toBe('');
     expect(input('pages').value).toBe('');
     expect(input('description').value).toBe('');
+    expect(input('coverUrl').value).toBe('');
     await submit();
-    expect(host.saved[0]).toMatchObject({ isbn: null, pages: null, description: null });
+    expect(host.saved[0]).toMatchObject({ isbn: null, pages: null, description: null, coverUrl: null });
   });
 
   it('en edición, prefill no tiene efecto', async () => {
@@ -184,5 +188,86 @@ describe('BookFormComponent', () => {
     expect(input('title').value).toBe('Dune');
     expect(input('author').value).toBe('Frank Herbert');
     expect(input('pages').value).toBe('500');
+  });
+
+  describe('URL de portada', () => {
+    const COVER = 'https://example.com/c.jpg';
+
+    it('tiene el campo URL de portada', async () => {
+      const { el, input } = await setup();
+      const label = Array.from(el.querySelectorAll('label')).find((l) => l.textContent?.trim() === 'URL de portada')!;
+      expect(label).toBeDefined();
+      expect(el.querySelector(`#${label.htmlFor}`)).toBe(input('coverUrl'));
+      expect(input('coverUrl').type).toBe('url');
+    });
+
+    it('en edición carga el coverUrl del libro', async () => {
+      const { fixture, host, input } = await setup();
+      host.book.set({ ...BOOK, coverUrl: COVER });
+      await fixture.whenStable();
+      expect(input('coverUrl').value).toBe(COVER);
+    });
+
+    it('vacío se envía como null y con espacios se recorta', async () => {
+      const { host, type, submit } = await setup();
+      await type('title', 'T');
+      await type('author', 'A');
+      await type('coverUrl', '   ');
+      await submit();
+      expect(host.saved[0].coverUrl).toBeNull();
+      await type('coverUrl', `  ${COVER}  `);
+      await submit();
+      expect(host.saved[1].coverUrl).toBe(COVER);
+    });
+
+    it('en edición, borrar la URL envía coverUrl null', async () => {
+      const { fixture, host, type, submit } = await setup();
+      host.book.set({ ...BOOK, coverUrl: COVER });
+      await fixture.whenStable();
+      await type('coverUrl', '');
+      await submit();
+      expect(host.saved[0].coverUrl).toBeNull();
+    });
+
+    it('muestra la vista previa con la URL', async () => {
+      const { el, type } = await setup();
+      expect(el.querySelector('img.cover-preview')).toBeNull();
+      await type('coverUrl', COVER);
+      const img = el.querySelector('img.cover-preview') as HTMLImageElement;
+      expect(img.getAttribute('src')).toBe(COVER);
+      expect(img.getAttribute('referrerpolicy')).toBe('no-referrer');
+    });
+
+    it('si la vista previa falla muestra No se pudo cargar la imagen y deja guardar', async () => {
+      const { fixture, el, host, type, submit, submitButton } = await setup();
+      await type('title', 'T');
+      await type('author', 'A');
+      await type('coverUrl', COVER);
+      el.querySelector('img.cover-preview')!.dispatchEvent(new Event('error'));
+      await fixture.whenStable();
+      expect(el.querySelector('img.cover-preview')).toBeNull();
+      expect(el.textContent).toContain('No se pudo cargar la imagen');
+      expect(submitButton().disabled).toBe(false);
+      await submit();
+      expect(host.saved[0].coverUrl).toBe(COVER);
+    });
+
+    it('corregir la URL vuelve a intentar la vista previa', async () => {
+      const { fixture, el, type } = await setup();
+      await type('coverUrl', COVER);
+      el.querySelector('img.cover-preview')!.dispatchEvent(new Event('error'));
+      await fixture.whenStable();
+      await type('coverUrl', 'https://otra/c.jpg');
+      expect(el.querySelector('img.cover-preview')?.getAttribute('src')).toBe('https://otra/c.jpg');
+      expect(el.textContent).not.toContain('No se pudo cargar la imagen');
+    });
+
+    it('muestra el 422 de coverUrl debajo del campo', async () => {
+      const { fixture, el, host } = await setup();
+      host.serverErrors.set({ coverUrl: 'Invalid URL' });
+      await fixture.whenStable();
+      const field = el.querySelector('[name="coverUrl"]')!.closest('.field')!;
+      expect(field.textContent).toContain('Invalid URL');
+    });
   });
 });

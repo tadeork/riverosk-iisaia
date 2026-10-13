@@ -230,8 +230,7 @@ describe('BookListComponent', () => {
     fixture.detectChanges();
 
     const req = httpTesting.expectOne('/api/books');
-    const { coverUrl: _cover, ...withoutCover } = CANDIDATE; // coverUrl entra en Task 4
-    expect(req.request.body).toEqual({ ...withoutCover, status: 'to-read' });
+    expect(req.request.body).toEqual({ ...CANDIDATE, status: 'to-read' });
     req.flush(book({ id: '9', ...CANDIDATE, status: 'to-read', pagesRead: 0 }));
     fixture.detectChanges();
     expect(el.querySelector('app-book-form')).toBeNull();
