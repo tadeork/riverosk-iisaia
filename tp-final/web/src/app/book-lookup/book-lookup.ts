@@ -25,6 +25,7 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
         <input
           id="lookup-q"
           type="text"
+          maxlength="200"
           [value]="query()"
           (input)="onInput($event)"
           (keydown.enter)="search()"
@@ -113,6 +114,7 @@ export class BookLookupComponent {
   protected search(): void {
     const q = this.query().trim();
     if (!q) return;
+    // Enter durante la carga está permitido: switchMap cancela el request anterior.
     this.state.set({ kind: 'loading' });
     this.search$.next(q);
   }

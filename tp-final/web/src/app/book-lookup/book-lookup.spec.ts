@@ -53,6 +53,11 @@ describe('BookLookupComponent', () => {
     );
   });
 
+  it('el input limita el texto a 200 caracteres', async () => {
+    const { input } = await setup();
+    expect(input.maxLength).toBe(200);
+  });
+
   it('el botón está deshabilitado con el input vacío o con solo espacios', async () => {
     const { button, type } = await setup();
     expect(button().disabled).toBe(true);
