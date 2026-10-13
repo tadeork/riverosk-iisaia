@@ -1,4 +1,15 @@
-import { Component, computed, DestroyRef, inject, output, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  Injector,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, of, Subject, switchMap } from 'rxjs';
@@ -37,14 +48,14 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
 
       @switch (state().kind) {
         @case ('loading') {
-          <p class="status">Buscando…</p>
+          <p class="status" role="status">Buscando…</p>
         }
         @case ('error') {
           <p class="error" role="alert">{{ errorMessage() }}</p>
         }
         @case ('results') {
           @if (items().length === 0) {
-            <p class="status">No se encontraron libros.</p>
+            <p class="status" role="status">No se encontraron libros.</p>
           } @else {
             <ul class="candidates">
               @for (c of items(); track $index) {
@@ -58,7 +69,7 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
           }
         }
         @case ('picked') {
-          <p class="status">Datos cargados desde Google Books: revisalos antes de guardar.</p>
+          <p #notice class="status" role="status" tabindex="-1">Datos cargados desde Google Books: revisalos antes de guardar.</p>
         }
       }
     </div>
@@ -66,6 +77,8 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
 })
 export class BookLookupComponent {
   private readonly api = inject(LookupApi);
+  private readonly injector = inject(Injector);
+  private readonly notice = viewChild<ElementRef<HTMLElement>>('notice');
 
   readonly picked = output<BookCandidate>();
 
@@ -122,5 +135,7 @@ export class BookLookupComponent {
   protected pick(candidate: BookCandidate): void {
     this.state.set({ kind: 'picked' });
     this.picked.emit(candidate);
+    // El botón clickeado desaparece: llevamos el foco al aviso para no perderlo.
+    afterNextRender(() => this.notice()?.nativeElement.focus(), { injector: this.injector });
   }
 }

@@ -33,10 +33,10 @@ Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `da
 
 ## Arquitectura
 
-- **API** (`api/`): Express + SQLite (`better-sqlite3`) con validación `zod`. Expone `GET/POST /api/books` y `GET/PATCH/DELETE /api/books/:id`. Filtros por `status` y `q`, y orden con `sort` (`newest`, `oldest`, `title`, `author`), todo en el servidor.
+- **API** (`api/`): Express + SQLite (`better-sqlite3`) con validación `zod`. Expone `GET/POST /api/books` y `GET/PATCH/DELETE /api/books/:id`, más `GET /api/lookup?q=`: proxy a Google Books que devuelve hasta 10 candidatos normalizados; el buscador se inyecta en `createApp` para que los tests no toquen la red. Filtros por `status` y `q`, y orden con `sort` (`newest`, `oldest`, `title`, `author`), todo en el servidor.
 - **Datos**: una tabla `books` (título, autor, ISBN, páginas, descripción, estado, `pagesRead`, fechas). Las reglas de negocio (estados y progreso) viven en `books.routes.ts`.
-- **Frontend** (`web/`): Angular con componentes standalone y signals. Solo `books.api.ts` hace HTTP; `book-list` guarda la lista en un signal y actualiza en el lugar con las respuestas del servidor.
-- **Contrato**: [api/openapi.yaml](api/openapi.yaml) es la fuente de verdad entre interfaz y servidor. El diseño completo está en el [spec](docs/superpowers/specs/2026-10-07-scriptorium-core-design.md).
+- **Frontend** (`web/`): Angular con componentes standalone y signals. Solo los archivos `*.api.ts` (`books.api.ts`, `lookup.api.ts`) hacen HTTP; en el alta, `book-lookup` busca en Google Books y precarga el formulario; `book-list` guarda la lista en un signal y actualiza en el lugar con las respuestas del servidor.
+- **Contrato**: [api/openapi.yaml](api/openapi.yaml) es la fuente de verdad entre interfaz y servidor. El diseño completo está en el [spec](docs/superpowers/specs/2026-10-07-scriptorium-core-design.md) y el de la búsqueda en Google Books en [este otro](docs/superpowers/specs/2026-10-12-google-books-lookup-design.md).
 - **Limitación conocida**: la búsqueda y el orden por título/autor ignoran mayúsculas solo para ASCII, así que "Ángel" y "angel" no se consideran iguales.
 
 ## Qué decidí yo

@@ -72,6 +72,7 @@ describe('BookLookupComponent', () => {
     search('  rayuela ');
     lookupReq(httpTesting, 'rayuela');
     expect(el.textContent).toContain('Buscando…');
+    expect(el.querySelector('[role="status"]')?.textContent?.trim()).toBe('Buscando…');
   });
 
   it('Enter en el input busca', async () => {
@@ -106,7 +107,9 @@ describe('BookLookupComponent', () => {
     search('zzz');
     lookupReq(httpTesting, 'zzz').flush([]);
     fixture.detectChanges();
-    expect(el.textContent).toContain('No se encontraron libros.');
+    expect(el.querySelector('[role="status"]')?.textContent?.trim()).toBe(
+      'No se encontraron libros.',
+    );
   });
 
   it('un 502 muestra el mensaje de Google', async () => {
@@ -143,9 +146,11 @@ describe('BookLookupComponent', () => {
     fixture.detectChanges();
     expect(picked).toEqual([RAYUELA]);
     expect(candidates().length).toBe(0);
-    expect(el.textContent).toContain(
+    const notice = el.querySelector('[role="status"]');
+    expect(notice?.textContent).toContain(
       'Datos cargados desde Google Books: revisalos antes de guardar.',
     );
+    expect(document.activeElement).toBe(notice);
   });
 
   it('una búsqueda nueva cancela la anterior', async () => {

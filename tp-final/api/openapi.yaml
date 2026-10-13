@@ -125,7 +125,7 @@ paths:
         - name: q
           in: query
           required: true
-          description: Texto a buscar. Se recorta; si queda vacío devuelve 400.
+          description: Texto a buscar. Se recorta; si queda vacío devuelve 400. El máximo de 200 caracteres se aplica después de recortar.
           schema: { type: string, maxLength: 200 }
       responses:
         '200':
