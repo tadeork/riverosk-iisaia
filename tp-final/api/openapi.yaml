@@ -116,6 +116,29 @@ paths:
           description: Libro borrado, sin body.
         '404': { $ref: '#/components/responses/NotFound' }
         '500': { $ref: '#/components/responses/Internal' }
+  /lookup:
+    get:
+      summary: Busca libros en Google Books
+      description: Devuelve hasta 10 candidatos para precargar el formulario. No guarda nada.
+      operationId: lookupBooks
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Texto a buscar. Se recorta; si queda vacío devuelve 400.
+          schema: { type: string, maxLength: 200 }
+      responses:
+        '200':
+          description: Candidatos encontrados, posiblemente ninguno.
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 10
+                items: { $ref: '#/components/schemas/BookCandidate' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '502': { $ref: '#/components/responses/BadGateway' }
+        '500': { $ref: '#/components/responses/Internal' }
 components:
   schemas:
     Status:
@@ -158,6 +181,16 @@ components:
         description: { type: [string, 'null'] }
         status: { $ref: '#/components/schemas/Status' }
         pagesRead: { type: integer, minimum: 0 }
+    BookCandidate:
+      type: object
+      description: Libro encontrado en Google Books. Los campos opcionales se devuelven siempre, con `null` si no tienen valor.
+      required: [title, author, isbn, pages, description]
+      properties:
+        title: { type: string, minLength: 1 }
+        author: { type: string, minLength: 1 }
+        isbn: { type: [string, 'null'] }
+        pages: { type: [integer, 'null'], minimum: 1 }
+        description: { type: [string, 'null'] }
     Error:
       type: object
       required: [error]
@@ -168,7 +201,7 @@ components:
           properties:
             code:
               type: string
-              enum: [BAD_REQUEST, NOT_FOUND, VALIDATION_ERROR, INTERNAL]
+              enum: [BAD_REQUEST, NOT_FOUND, VALIDATION_ERROR, UPSTREAM_ERROR, INTERNAL]
             message: { type: string }
             fields:
               type: object
@@ -187,6 +220,11 @@ components:
           schema: { $ref: '#/components/schemas/Error' }
     Validation:
       description: El body no cumple el esquema o las reglas de negocio (`VALIDATION_ERROR`, con `fields`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    BadGateway:
+      description: Google Books no respondió o respondió con error (`UPSTREAM_ERROR`).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
