@@ -5,7 +5,7 @@ import { bookCreateSchema, bookPatchSchema, listQuerySchema, type BookInput } fr
 import { HttpError } from './errors.js';
 
 const DEFAULTS: BookFields = {
-  title: '', author: '', isbn: null, pages: null, description: null, status: 'to-read', pagesRead: 0,
+  title: '', author: '', isbn: null, pages: null, description: null, coverUrl: null, status: 'to-read', pagesRead: 0,
 };
 
 // Único lugar con reglas de negocio (reglas 1-3). Lo reutiliza PATCH.

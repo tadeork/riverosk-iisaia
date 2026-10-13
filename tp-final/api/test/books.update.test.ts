@@ -128,3 +128,13 @@ test('PATCH ignora id del body (regla 5)', async () => {
   expect(res.body.id).toBe(book.id);
   expect(res.body.title).toBe('N');
 });
+
+test('PATCH setea coverUrl y null lo quita', async () => {
+  const { api, url } = await setup();
+  const set = await api.patch(url).send({ coverUrl: 'https://example.com/c.jpg' });
+  expect(set.status).toBe(200);
+  expect(set.body.coverUrl).toBe('https://example.com/c.jpg');
+  const cleared = await api.patch(url).send({ coverUrl: null });
+  expect(cleared.status).toBe(200);
+  expect(cleared.body.coverUrl).toBeNull();
+});

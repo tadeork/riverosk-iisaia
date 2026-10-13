@@ -111,3 +111,31 @@ test('GET /api/inexistente → 404 NOT_FOUND con el shape de error', async () =>
   expect(res.status).toBe(404);
   expect(res.body.error.code).toBe('NOT_FOUND');
 });
+
+test('POST sin coverUrl devuelve coverUrl null', async () => {
+  const res = await makeApp().post('/api/books').send({ title: 'T', author: 'A' });
+  expect(res.body.coverUrl).toBeNull();
+});
+
+test.each(['https://example.com/c.jpg', 'http://example.com/c.jpg'])('POST con coverUrl %s → 201', async (url) => {
+  const res = await makeApp().post('/api/books').send({ title: 'T', author: 'A', coverUrl: url });
+  expect(res.status).toBe(201);
+  expect(res.body.coverUrl).toBe(url);
+});
+
+test('POST recorta los espacios de coverUrl', async () => {
+  const res = await makeApp().post('/api/books').send({ title: 'T', author: 'A', coverUrl: '  https://example.com/c.jpg  ' });
+  expect(res.status).toBe(201);
+  expect(res.body.coverUrl).toBe('https://example.com/c.jpg');
+});
+
+test.each([
+  ['ftp', 'ftp://example.com/c.jpg'],
+  ['javascript', 'javascript:alert(1)'],
+  ['texto suelto', 'no es url'],
+  ['2001 caracteres', 'https://example.com/' + 'a'.repeat(1981)],
+])('POST con coverUrl inválido (%s) → 422 fields.coverUrl', async (_name, url) => {
+  const res = await makeApp().post('/api/books').send({ title: 'T', author: 'A', coverUrl: url });
+  expect(res.status).toBe(422);
+  expect(res.body.error.fields.coverUrl).toBeDefined();
+});

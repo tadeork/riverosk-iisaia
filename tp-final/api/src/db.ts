@@ -15,7 +15,11 @@ export function openDb(path: string): Database.Database {
     status TEXT NOT NULL,
     pagesRead INTEGER NOT NULL DEFAULT 0,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
+    updatedAt TEXT NOT NULL,
+    coverUrl TEXT
   )`);
+  // Migración idempotente para bases creadas antes de coverUrl.
+  const columns = db.prepare('PRAGMA table_info(books)').all() as { name: string }[];
+  if (!columns.some((c) => c.name === 'coverUrl')) db.exec('ALTER TABLE books ADD COLUMN coverUrl TEXT');
   return db;
 }
