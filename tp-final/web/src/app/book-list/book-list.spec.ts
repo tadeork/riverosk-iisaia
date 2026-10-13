@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Book } from '../book.model';
+import { Book, BookCandidate } from '../book.model';
 import { BookListComponent } from './book-list';
 
 const book = (over: Partial<Book>): Book => ({
@@ -17,6 +17,14 @@ const book = (over: Partial<Book>): Book => ({
   updatedAt: '2026-01-01T00:00:00.000Z',
   ...over,
 });
+
+const CANDIDATE: BookCandidate = {
+  title: 'Rayuela',
+  author: 'Julio Cortázar',
+  isbn: '9780394752846',
+  pages: 736,
+  description: 'Una novela rompecabezas.',
+};
 
 async function setup() {
   vi.useFakeTimers();
@@ -190,5 +198,77 @@ describe('BookListComponent', () => {
     expect(el.querySelector('input[type="search"]')?.getAttribute('placeholder')).toBe(
       'Buscar por título, autor o ISBN',
     );
+  });
+
+  const searchAndPick = (
+    fixture: { detectChanges(): void },
+    el: HTMLElement,
+    httpTesting: HttpTestingController,
+  ) => {
+    const q = el.querySelector('#lookup-q') as HTMLInputElement;
+    q.value = 'rayuela';
+    q.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    buttonByText(el, 'Buscar').click();
+    httpTesting.expectOne('/api/lookup?q=rayuela').flush([CANDIDATE]);
+    fixture.detectChanges();
+    (el.querySelector('button.candidate') as HTMLButtonElement).click();
+    fixture.detectChanges();
+  };
+
+  it('flujo completo: Agregar → buscar → elegir → guardar', async () => {
+    const { fixture, httpTesting, el } = await setup();
+    httpTesting.expectOne('/api/books?sort=newest').flush([]);
+    fixture.detectChanges();
+
+    buttonByText(el, '+ Agregar').click();
+    fixture.detectChanges();
+    searchAndPick(fixture, el, httpTesting);
+    buttonByText(el, 'Agregar libro').click();
+    fixture.detectChanges();
+
+    const req = httpTesting.expectOne('/api/books');
+    expect(req.request.body).toEqual({ ...CANDIDATE, status: 'to-read' });
+    req.flush(book({ id: '9', ...CANDIDATE, status: 'to-read', pagesRead: 0 }));
+    fixture.detectChanges();
+    expect(el.querySelector('app-book-form')).toBeNull();
+    httpTesting.verify();
+  });
+
+  it('en edición no aparece el buscador', async () => {
+    const { fixture, httpTesting, el } = await setup();
+    httpTesting.expectOne('/api/books?sort=newest').flush([book({})]);
+    fixture.detectChanges();
+
+    buttonByText(el, 'Editar').click();
+    fixture.detectChanges();
+    expect(el.querySelector('app-book-lookup')).toBeNull();
+    buttonByText(el, 'Cancelar').click();
+    fixture.detectChanges();
+
+    buttonByText(el, '+ Agregar').click();
+    fixture.detectChanges();
+    expect(el.querySelector('app-book-lookup')).not.toBeNull();
+    httpTesting.verify();
+  });
+
+  it('cerrar el modal limpia la precarga', async () => {
+    const { fixture, httpTesting, el } = await setup();
+    httpTesting.expectOne('/api/books?sort=newest').flush([]);
+    fixture.detectChanges();
+
+    buttonByText(el, '+ Agregar').click();
+    fixture.detectChanges();
+    searchAndPick(fixture, el, httpTesting);
+    expect(titleInput(el)!.value).toBe('Rayuela');
+    buttonByText(el, 'Cancelar').click();
+    fixture.detectChanges();
+
+    buttonByText(el, '+ Agregar').click();
+    fixture.detectChanges();
+    expect(titleInput(el)!.value).toBe('');
+    expect(el.querySelector('button.candidate')).toBeNull();
+    expect(el.textContent).not.toContain('Datos cargados desde Google Books');
+    httpTesting.verify();
   });
 });

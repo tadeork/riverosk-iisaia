@@ -3,8 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, debounceTime, EMPTY, merge, startWith, Subject, switchMap } from 'rxjs';
 import { toUiError, UiError } from '../api-error';
-import { Book, BookInput, Sort, Status } from '../book.model';
+import { Book, BookCandidate, BookInput, Sort, Status } from '../book.model';
 import { BookCardComponent } from '../book-card/book-card';
+import { BookLookupComponent } from '../book-lookup/book-lookup';
 import { BookFormComponent } from '../book-form/book-form';
 import { BooksApi } from '../books.api';
 import { ModalOverlayComponent } from '../modal-overlay/modal-overlay';
@@ -19,7 +20,13 @@ const SORT_OPTIONS: { value: Sort; label: string }[] = [
 
 @Component({
   selector: 'app-book-list',
-  imports: [BookCardComponent, BookFormComponent, ModalOverlayComponent, StatusSelectorComponent],
+  imports: [
+    BookCardComponent,
+    BookFormComponent,
+    BookLookupComponent,
+    ModalOverlayComponent,
+    StatusSelectorComponent,
+  ],
   styleUrl: './book-list.scss',
   template: `
     <div class="toolbar">
@@ -78,8 +85,12 @@ const SORT_OPTIONS: { value: Sort; label: string }[] = [
       (closed)="closeModal()"
     >
       @if (editing() !== undefined) {
+        @if (editing() === null) {
+          <app-book-lookup (picked)="prefill.set($event)" />
+        }
         <app-book-form
           [book]="editing() ?? null"
+          [prefill]="prefill()"
           [serverErrors]="formErrors()"
           (save)="onSave($event)"
           (cancelled)="closeModal()"
@@ -100,6 +111,7 @@ export class BookListComponent {
   /** undefined = modal cerrado, null = alta, Book = edición */
   readonly editing = signal<Book | null | undefined>(undefined);
   readonly formErrors = signal<Record<string, string> | null>(null);
+  readonly prefill = signal<BookCandidate | null>(null);
 
   private readonly reload$ = new Subject<void>();
   private readonly search$ = new Subject<void>();
@@ -149,6 +161,7 @@ export class BookListComponent {
 
   protected openCreate(): void {
     this.formErrors.set(null);
+    this.prefill.set(null);
     this.editing.set(null);
   }
 
@@ -160,6 +173,7 @@ export class BookListComponent {
   protected closeModal(): void {
     this.editing.set(undefined);
     this.formErrors.set(null);
+    this.prefill.set(null);
   }
 
   protected onSave(input: BookInput): void {
