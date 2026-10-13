@@ -28,6 +28,7 @@ const BOOK: Book = {
   isbn: null,
   pages: 500,
   description: 'Arrakis',
+  coverUrl: null,
   status: 'reading',
   pagesRead: 100,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -40,6 +41,7 @@ const CANDIDATE: BookCandidate = {
   isbn: '9780553293357',
   pages: 255,
   description: 'Imperio galáctico',
+  coverUrl: null,
 };
 
 async function setup() {
@@ -156,7 +158,8 @@ describe('BookFormComponent', () => {
     expect(input('description').value).toBe('Imperio galáctico');
     expect(select.value).toBe('reading');
     await submit();
-    expect(host.saved[0]).toEqual({ ...CANDIDATE, status: 'reading' });
+    const { coverUrl: _cover, ...withoutCover } = CANDIDATE; // coverUrl entra en Task 4
+    expect(host.saved[0]).toEqual({ ...withoutCover, status: 'reading' });
   });
 
   it('un prefill con nulls vacía los opcionales', async () => {

@@ -10,6 +10,7 @@ const RAYUELA: BookCandidate = {
   isbn: '9780394752846',
   pages: 736,
   description: null,
+  coverUrl: null,
 };
 
 async function setup() {

@@ -11,6 +11,7 @@ const book = (over: Partial<Book>): Book => ({
   isbn: null,
   pages: 500,
   description: null,
+  coverUrl: null,
   status: 'reading',
   pagesRead: 100,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -24,6 +25,7 @@ const CANDIDATE: BookCandidate = {
   isbn: '9780394752846',
   pages: 736,
   description: 'Una novela rompecabezas.',
+  coverUrl: null,
 };
 
 async function setup() {
@@ -228,7 +230,8 @@ describe('BookListComponent', () => {
     fixture.detectChanges();
 
     const req = httpTesting.expectOne('/api/books');
-    expect(req.request.body).toEqual({ ...CANDIDATE, status: 'to-read' });
+    const { coverUrl: _cover, ...withoutCover } = CANDIDATE; // coverUrl entra en Task 4
+    expect(req.request.body).toEqual({ ...withoutCover, status: 'to-read' });
     req.flush(book({ id: '9', ...CANDIDATE, status: 'to-read', pagesRead: 0 }));
     fixture.detectChanges();
     expect(el.querySelector('app-book-form')).toBeNull();
