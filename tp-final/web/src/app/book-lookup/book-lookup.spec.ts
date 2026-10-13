@@ -103,6 +103,27 @@ describe('BookLookupComponent', () => {
     expect(items[1].textContent).not.toContain('págs.');
   });
 
+  it('un candidato con coverUrl muestra la miniatura', async () => {
+    const { httpTesting, fixture, search, candidates } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush([{ ...RAYUELA, coverUrl: 'https://x/t.jpg' }]);
+    fixture.detectChanges();
+    const img = candidates()[0].querySelector('img') as HTMLImageElement;
+    expect(img.getAttribute('src')).toBe('https://x/t.jpg');
+    expect(img.getAttribute('alt')).toBe('');
+    expect(img.getAttribute('referrerpolicy')).toBe('no-referrer');
+    expect(candidates()[0].textContent?.trim()).toBe('Rayuela — Julio Cortázar · 736 págs.');
+  });
+
+  it('sin coverUrl no hay img pero sí el hueco', async () => {
+    const { httpTesting, fixture, search, candidates } = await setup();
+    search('rayuela');
+    lookupReq(httpTesting, 'rayuela').flush([RAYUELA]);
+    fixture.detectChanges();
+    expect(candidates()[0].querySelector('img')).toBeNull();
+    expect(candidates()[0].querySelector('.thumb-empty')).not.toBeNull();
+  });
+
   it('sin resultados muestra No se encontraron libros.', async () => {
     const { httpTesting, fixture, el, search } = await setup();
     search('zzz');

@@ -61,7 +61,12 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
               @for (c of items(); track $index) {
                 <li>
                   <button type="button" class="candidate" (click)="pick(c)">
-                    {{ c.title }} — {{ c.author }}@if (c.pages !== null) { · {{ c.pages }} págs.}
+                    @if (c.coverUrl) {
+                      <img class="thumb" [src]="c.coverUrl" alt="" referrerpolicy="no-referrer" />
+                    } @else {
+                      <span class="thumb thumb-empty"></span>
+                    }
+                    <span>{{ c.title }} — {{ c.author }}@if (c.pages !== null) { · {{ c.pages }} págs.}</span>
                   </button>
                 </li>
               }

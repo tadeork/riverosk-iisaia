@@ -25,7 +25,7 @@ const CANDIDATE: BookCandidate = {
   isbn: '9780394752846',
   pages: 736,
   description: 'Una novela rompecabezas.',
-  coverUrl: null,
+  coverUrl: 'https://x/t.jpg',
 };
 
 async function setup() {
