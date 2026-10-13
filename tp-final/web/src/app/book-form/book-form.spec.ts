@@ -1,12 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Book, BookInput } from '../book.model';
+import { Book, BookCandidate, BookInput } from '../book.model';
 import { BookFormComponent } from './book-form';
 
 @Component({
   imports: [BookFormComponent],
   template: `<app-book-form
     [book]="book()"
+    [prefill]="prefill()"
     [serverErrors]="serverErrors()"
     (save)="saved.push($event)"
     (cancelled)="cancels = cancels + 1"
@@ -14,6 +15,7 @@ import { BookFormComponent } from './book-form';
 })
 class HostComponent {
   book = signal<Book | null>(null);
+  prefill = signal<BookCandidate | null>(null);
   serverErrors = signal<Record<string, string> | null>(null);
   saved: BookInput[] = [];
   cancels = 0;
@@ -30,6 +32,14 @@ const BOOK: Book = {
   pagesRead: 100,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
+const CANDIDATE: BookCandidate = {
+  title: 'Fundación',
+  author: 'Isaac Asimov',
+  isbn: '9780553293357',
+  pages: 255,
+  description: 'Imperio galáctico',
 };
 
 async function setup() {
@@ -129,5 +139,47 @@ describe('BookFormComponent', () => {
     (el.querySelector('button.cancel') as HTMLButtonElement).click();
     expect(host.cancels).toBe(1);
     expect(host.saved).toEqual([]);
+  });
+
+  it('un prefill completa los cinco campos y no toca el estado', async () => {
+    const { fixture, el, host, input, type, submit } = await setup();
+    const select = el.querySelector('select')!;
+    select.value = 'reading';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    await type('title', 'Tipeado');
+    host.prefill.set(CANDIDATE);
+    await fixture.whenStable();
+    expect(input('title').value).toBe('Fundación');
+    expect(input('author').value).toBe('Isaac Asimov');
+    expect(input('isbn').value).toBe('9780553293357');
+    expect(input('pages').value).toBe('255');
+    expect(input('description').value).toBe('Imperio galáctico');
+    expect(select.value).toBe('reading');
+    await submit();
+    expect(host.saved[0]).toEqual({ ...CANDIDATE, status: 'reading' });
+  });
+
+  it('un prefill con nulls vacía los opcionales', async () => {
+    const { fixture, host, input, type, submit } = await setup();
+    await type('isbn', '123');
+    await type('description', 'algo');
+    host.prefill.set({ ...CANDIDATE, isbn: null, pages: null, description: null });
+    await fixture.whenStable();
+    expect(input('isbn').value).toBe('');
+    expect(input('pages').value).toBe('');
+    expect(input('description').value).toBe('');
+    await submit();
+    expect(host.saved[0]).toMatchObject({ isbn: null, pages: null, description: null });
+  });
+
+  it('en edición, prefill no tiene efecto', async () => {
+    const { fixture, host, input } = await setup();
+    host.book.set(BOOK);
+    await fixture.whenStable();
+    host.prefill.set(CANDIDATE);
+    await fixture.whenStable();
+    expect(input('title').value).toBe('Dune');
+    expect(input('author').value).toBe('Frank Herbert');
+    expect(input('pages').value).toBe('500');
   });
 });
