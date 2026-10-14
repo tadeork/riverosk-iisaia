@@ -16,6 +16,7 @@ Cada feature fue un ciclo propio de spec → plan → branch → implementación
 
 - El contrato entre interfaz y servidor es [api/openapi.yaml](api/openapi.yaml).
 - Las decisiones de arquitectura y las reglas para el agente están en [CLAUDE.md](CLAUDE.md), desde el primer commit.
+- Los prompts de todas las sesiones, en orden, están en [prompts.md](prompts.md).
 - El núcleo entró por el [PR #1](https://github.com/tadeork/riverosk-iisaia/pull/1). Las otras dos features se mergearon en local (ver "Qué salió mal").
 
 ## Cómo se ejecuta
@@ -85,6 +86,10 @@ Las decisiones salieron del brainstorming de cada ciclo, respondiendo de a una p
 **Un subagente por tarea.** Ejecuté los planes con `subagent-driven-development`. Cada tarea la implementó un subagente nuevo con TDD, que solo recibía la tarea del plan y los archivos que tocaba, sin el historial de la conversación. Después de cada tarea, otro subagente revisó si cumplía el spec y la calidad del código. La sesión principal solo coordinaba, así que no se llenaba de diffs.
 
 **Un ciclo chico por feature.** En lugar de un plan gigante, tres ciclos: núcleo, búsqueda y portadas. Cada uno entra en una sesión, y lo que queda afuera de un spec queda anotado en su sección "Fuera de alcance" para el ciclo siguiente.
+
+## Prompts
+
+El registro completo está en [prompts.md](prompts.md). Los que más pesaron son el de "commit a commit, no es un one shot", que cambió el plan de copiar la app vieja por reconstruirla, y los `brainstorming` de cada ciclo, donde cada decisión salió de una respuesta mía a una pregunta de opción múltiple. La mayoría de mis mensajes son aprobaciones cortas ("si, continua", "2", "directo"), así que cada uno va con la pregunta que respondía.
 
 ## Qué salió mal
 
