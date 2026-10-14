@@ -61,5 +61,19 @@ web/src/app/
 
 ## Comandos
 
-- `api/`: `npm test` y `npm run dev`.
-- `web/`: `npx ng test --watch=false` y `npx ng serve` (o `npm start`).
+- `api/`: `npm test`, `npx tsc --noEmit` (chequeo de tipos, no genera archivos) y `npm run dev`.
+- `web/`: `npx ng test --watch=false`, `npx ng build` y `npx ng serve` (o `npm start`).
+- Contrato, desde `api/`: `npx @redocly/cli@latest lint openapi.yaml`. Necesita red; hoy da válido con 1 warning.
+- Dependencias: `npm install` en `api/` y en `web/`. Cambiar dependencias se confirma con el usuario antes.
+
+## Verificación antes de terminar
+
+- Cambios en `api/`: `npm test` y `npx tsc --noEmit`. Si se tocó `openapi.yaml`, también el lint del contrato.
+- Cambios en `web/`: `npx ng test --watch=false` y `npx ng build`.
+- El hook Stop de `.claude/` corre estas verificaciones solo si hay cambios sin commitear. Antes de commitear o abrir un PR hay que correrlas igual, y citar la salida.
+- Prettier: `web/.prettierrc` existe, pero hay archivos que no lo cumplen. No se corre sobre carpetas enteras, porque mete diffs ajenos a la tarea.
+
+## Datos
+
+- `api/data/scriptorium.db` es la base real del usuario: está fuera de git y no se borra, no se mueve ni se migra a mano. Si un cambio de esquema la toca, se hace un backup antes y se avisa.
+- Los tests usan SQLite `:memory:` o archivos en el directorio temporal del sistema, y un `fetch` falso. Ninguno toca la base real ni la red.
