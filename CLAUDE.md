@@ -48,7 +48,7 @@ Estas reglas son instrucciones. Solo algunas tienen un control determinista en `
 | Control | Qué hace |
 |---|---|
 | `attribution` vacío | Claude Code no agrega su atribución a commits ni PRs. |
-| Hook `guard-bash.mjs` (PreToolUse, Bash) | Bloquea force push, `git clean -x`/`-X`, commits o PRs con atribución a Claude y comandos que borran o mueven `tp-final/api/data`. Revisa el texto del comando: no ve un mensaje de commit leído de archivo (`-F`) ni lo que haga un script intermedio. |
+| Hook `guard-bash.mjs` (PreToolUse, Bash) | Bloquea force push, `git clean -x`/`-X`, commits o PRs con atribución a Claude y comandos que borran o mueven `tp-final/api/data`. Revisa el texto del comando: no ve un mensaje de commit leído de archivo (`-F`) ni lo que haga un script intermedio. Al revés, también bloquea si esos patrones aparecen como texto dentro de un argumento (por ejemplo, el body de un PR que los menciona); en ese caso, pasar el texto con `--body-file`. |
 | Hook `verify-tp-final.mjs` (Stop) | Si hay cambios sin commitear en `tp-final/api` o `tp-final/web`, corre los tests, `tsc` y el build de esa parte. Si fallan, devuelve la salida y no deja cerrar el turno; en la segunda parada seguida ya no bloquea. No corre sobre lo ya commiteado. |
 | Permisos `ask` / `deny` | Piden confirmación para push, PR, merge, `rm`, cambios de dependencias y ediciones en tp1/tp2. Prohíben el force push y editar `tp-final/api/data`. Se comparan con el comienzo de cada comando, así que no cubren variantes que empiecen distinto. |
 
