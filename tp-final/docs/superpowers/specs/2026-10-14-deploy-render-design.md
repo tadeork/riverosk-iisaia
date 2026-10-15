@@ -1,7 +1,7 @@
 # Scriptorium — Deploy en Render (diseño)
 
 Fecha: 2026-10-14
-Estado: el usuario eligió en el chat el plan gratis y la opción "deployar tal cual, con SQLite"; descartó localStorage porque la consigna pide persistencia en el servidor. Falta que revise este spec.
+Estado: el usuario eligió en el chat el plan gratis y la opción "deployar tal cual, con SQLite"; descartó localStorage porque la consigna pide persistencia en el servidor. El usuario aprobó este spec y el plan antes de implementar.
 Ciclo anterior: `2026-10-14-escaneo-tapa-design.md`. Este ciclo sale de su branch, porque la cámara necesita HTTPS y el deploy lo da.
 
 ## Objetivo
@@ -45,7 +45,7 @@ Scriptorium en una URL pública con HTTPS, para la demo, sin cambiar cómo se gu
 | Tipo, runtime y plan | `web_service`, `node`, `free` |
 | Repo y branch | `https://github.com/tadeork/riverosk-iisaia`, `main` |
 | Root directory | `tp-final` |
-| Build | `cd api && npm ci && cd ../web && npm ci && npx ng build` |
+| Build | `cd api && npm ci --include=dev && cd ../web && npm ci --include=dev && npx ng build` (las devDependencies hacen falta para `tsx` y `@angular/build`) |
 | Start | `cd api && npm start` |
 | Health check | `/api/books` |
 | Variables | `NODE_VERSION=24`, `WEB_DIR=../web/dist/web/browser`, `GOOGLE_BOOKS_API_KEY` (desde el entorno) |

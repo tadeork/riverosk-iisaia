@@ -50,15 +50,15 @@ Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `da
 
 ## Deploy
 
-La app se publica en Render como un solo servicio: Express sirve la API y el build de Angular, así que front y API comparten dominio y no hace falta CORS. Se creó con el CLI de Render:
+La app se publica en Render como un solo servicio: Express sirve la API y el build de Angular, así que front y API comparten dominio y no hace falta CORS. El servicio se crea con el CLI de Render:
 
 ```bash
 render services create --name scriptorium --type web_service --runtime node --plan free \
   --repo https://github.com/tadeork/riverosk-iisaia --branch main --root-directory tp-final \
-  --build-command "cd api && npm ci && cd ../web && npm ci && npx ng build" \
+  --build-command "cd api && npm ci --include=dev && cd ../web && npm ci --include=dev && npx ng build" \
   --start-command "cd api && npm start" --health-check-path /api/books \
   --env-var NODE_VERSION=24 --env-var WEB_DIR=../web/dist/web/browser \
-  --env-var GOOGLE_BOOKS_API_KEY="$GOOGLE_BOOKS_API_KEY"
+  --env-var GOOGLE_BOOKS_API_KEY="$GOOGLE_BOOKS_API_KEY" --output json
 ```
 
 La key sale del entorno de quien corre el comando; no está en el repo.

@@ -20,7 +20,7 @@ export function createApp(db: Database.Database, deps: { search: BookSearch; web
     // sendFile exige una ruta absoluta; en Render WEB_DIR es relativa a api/.
     const webDir = resolve(deps.webDir);
     app.use(express.static(webDir));
-    // Rutas del front (recargar en /libro/123): las resuelve Angular.
+    // Cualquier otra ruta GET (recargar la página en una URL del front) devuelve la app.
     app.get('/{*path}', (_req, res) => res.sendFile(resolve(webDir, 'index.html')));
   }
   app.use(errorHandler);
