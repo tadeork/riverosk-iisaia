@@ -46,10 +46,10 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
         <button type="button" class="search" [disabled]="!canSearch()" (click)="search()">
           Buscar
         </button>
-        <button type="button" class="scan" (click)="scanning.set(!scanning())">
-          {{ scanning() ? 'Cerrar cámara' : 'Escanear tapa' }}
-        </button>
       </div>
+      <button type="button" class="scan" (click)="scanning.set(!scanning())">
+        {{ scanning() ? 'Cerrar cámara' : 'Escanear tapa' }}
+      </button>
 
       @if (scanning()) {
         <app-cover-scanner (text)="onScanned($event)" />

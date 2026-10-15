@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { CoverOcr, TESSERACT } from './cover-ocr';
+import { CoverOcr, TESSERACT, unwrapCjs } from './cover-ocr';
 
 /** Video con tamaño: jsdom no reproduce video, así que se fija a mano. */
 function video(): HTMLVideoElement {
@@ -58,5 +58,17 @@ describe('CoverOcr', () => {
     const { ocr, createWorker } = setup(() => Promise.resolve(worker('Rayuela', 90)));
     expect(await ocr.read(document.createElement('video'))).toBe('');
     expect(createWorker).not.toHaveBeenCalled();
+  });
+
+  describe('unwrapCjs', () => {
+    const createWorker = () => Promise.resolve();
+
+    it('con el módulo como en el build de producción (solo default) devuelve el default', () => {
+      expect(unwrapCjs({ default: { createWorker } }).createWorker).toBe(createWorker);
+    });
+
+    it('con exports con nombre (como en ng serve) devuelve el módulo tal cual', () => {
+      expect(unwrapCjs({ createWorker }).createWorker).toBe(createWorker);
+    });
   });
 });
