@@ -235,6 +235,12 @@ describe('BookLookupComponent', () => {
   });
 
   describe('escanear la tapa', () => {
+    it('Escanear tapa va debajo de la fila del buscador, no al lado de Buscar', async () => {
+      const { el, scanButton } = await setup();
+      expect(el.querySelector('.row .scan')).toBeNull();
+      expect(scanButton().previousElementSibling?.classList.contains('row')).toBe(true);
+    });
+
     it('Escanear tapa muestra el scanner y Cerrar cámara lo saca', async () => {
       const { fixture, scanButton, scanner } = await setup();
       expect(scanButton().textContent?.trim()).toBe('Escanear tapa');
