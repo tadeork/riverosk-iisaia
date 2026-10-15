@@ -1,6 +1,10 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Camera } from '../camera';
+import { CoverOcr } from '../cover-ocr';
+import { CoverScannerComponent } from '../cover-scanner/cover-scanner';
 import { BookCandidate } from '../book.model';
 import { BookLookupComponent } from './book-lookup';
 
@@ -16,7 +20,13 @@ const RAYUELA: BookCandidate = {
 async function setup() {
   await TestBed.configureTestingModule({
     imports: [BookLookupComponent],
-    providers: [provideHttpClient(), provideHttpClientTesting()],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      // Cámara y OCR que nunca responden: el scanner se muestra pero no lee solo.
+      { provide: Camera, useValue: { open: () => new Promise(() => {}) } },
+      { provide: CoverOcr, useValue: { read: () => new Promise(() => {}) } },
+    ],
   }).compileComponents();
   const fixture = TestBed.createComponent(BookLookupComponent);
   const httpTesting = TestBed.inject(HttpTestingController);
@@ -38,7 +48,13 @@ async function setup() {
     fixture.detectChanges();
   };
   const candidates = () => Array.from(el.querySelectorAll<HTMLButtonElement>('button.candidate'));
-  return { fixture, httpTesting, el, input, button, type, search, candidates };
+  const scanButton = () => el.querySelector('button.scan') as HTMLButtonElement;
+  const scanner = () => fixture.debugElement.query(By.directive(CoverScannerComponent));
+  const scan = (text: string) => {
+    (scanner().componentInstance as CoverScannerComponent).text.emit(text);
+    fixture.detectChanges();
+  };
+  return { fixture, httpTesting, el, input, button, type, search, candidates, scanButton, scanner, scan };
 }
 
 const lookupReq = (h: HttpTestingController, q: string) =>
@@ -216,5 +232,57 @@ describe('BookLookupComponent', () => {
     expect(el.textContent).not.toContain('Datos cargados desde Google Books');
     expect(candidates().length).toBe(1);
     expect(candidates()[0].textContent).toContain('Otro');
+  });
+
+  describe('escanear la tapa', () => {
+    it('Escanear tapa muestra el scanner y Cerrar cámara lo saca', async () => {
+      const { fixture, scanButton, scanner } = await setup();
+      expect(scanButton().textContent?.trim()).toBe('Escanear tapa');
+      expect(scanner()).toBeNull();
+      scanButton().click();
+      fixture.detectChanges();
+      expect(scanner()).not.toBeNull();
+      expect(scanButton().textContent?.trim()).toBe('Cerrar cámara');
+      scanButton().click();
+      fixture.detectChanges();
+      expect(scanner()).toBeNull();
+      expect(scanButton().textContent?.trim()).toBe('Escanear tapa');
+    });
+
+    it('el texto del scanner, limpio, reemplaza la consulta', async () => {
+      const { fixture, input, scanButton, scan } = await setup();
+      scanButton().click();
+      fixture.detectChanges();
+      scan('  Rayuela\n\nJulio   Cortázar ');
+      expect(input.value).toBe('Rayuela Julio Cortázar');
+    });
+
+    it('el texto se corta en 200 caracteres', async () => {
+      const { fixture, input, scanButton, scan } = await setup();
+      scanButton().click();
+      fixture.detectChanges();
+      scan('a'.repeat(250));
+      expect(input.value.length).toBe(200);
+    });
+
+    it('el texto vacío o de solo espacios no cambia la consulta', async () => {
+      const { fixture, input, type, scanButton, scan } = await setup();
+      type('rayuela');
+      scanButton().click();
+      fixture.detectChanges();
+      scan(' \n ');
+      expect(input.value).toBe('rayuela');
+    });
+
+    it('Buscar cierra la cámara y busca el texto escaneado', async () => {
+      const { fixture, httpTesting, button, scanButton, scanner, scan } = await setup();
+      scanButton().click();
+      fixture.detectChanges();
+      scan('Rayuela');
+      button().click();
+      fixture.detectChanges();
+      expect(scanner()).toBeNull();
+      lookupReq(httpTesting, 'Rayuela').flush([]);
+    });
   });
 });

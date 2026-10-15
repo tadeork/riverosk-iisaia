@@ -1,0 +1,33 @@
+:host {
+  display: block;
+  font-family: 'Courier New', monospace;
+}
+
+.frame {
+  position: relative;
+  border: 3px solid #2d5016;
+  background: #000;
+}
+
+video {
+  display: block;
+  width: 100%;
+}
+
+// Recuadro guía: es la zona que lee el OCR (80 % × 40 %, centrada).
+.guide {
+  position: absolute;
+  left: 10%;
+  top: 30%;
+  width: 80%;
+  height: 40%;
+  border: 3px dashed #fbc02d;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.error {
+  margin: 8px 0 0;
+  color: #d32f2f;
+  font-weight: bold;
+}

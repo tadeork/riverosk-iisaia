@@ -8,6 +8,8 @@ Gestor de biblioteca personal: API Express + SQLite (`api/`) y frontend Angular 
 - Plan de la búsqueda en Google Books: [docs/superpowers/plans/2026-10-12-google-books-lookup.md](docs/superpowers/plans/2026-10-12-google-books-lookup.md)
 - Spec de portadas: [docs/superpowers/specs/2026-10-13-portadas-design.md](docs/superpowers/specs/2026-10-13-portadas-design.md)
 - Plan de portadas: [docs/superpowers/plans/2026-10-13-portadas.md](docs/superpowers/plans/2026-10-13-portadas.md)
+- Spec del escaneo de la tapa: [docs/superpowers/specs/2026-10-14-escaneo-tapa-design.md](docs/superpowers/specs/2026-10-14-escaneo-tapa-design.md)
+- Plan del escaneo de la tapa: [docs/superpowers/plans/2026-10-14-escaneo-tapa.md](docs/superpowers/plans/2026-10-14-escaneo-tapa.md)
 
 ## Decisiones
 
@@ -22,6 +24,7 @@ Gestor de biblioteca personal: API Express + SQLite (`api/`) y frontend Angular 
 | Filtrado/orden | En el servidor (query params `status`, `q`, `sort`) |
 | Actualización | `PATCH` parcial |
 | Portadas | Solo la URL (`coverUrl`); Google o a mano; placeholder si falla |
+| Escaneo de la tapa | OCR en vivo en el navegador (Tesseract.js, `spa`), 1 lectura/s; el texto va a la consulta del buscador |
 
 Estados: `to-read` (default) | `reading` | `read` | `borrowed` | `not-interested`.
 
@@ -41,9 +44,12 @@ api/
 web/src/app/
 ├── books.api.ts        HTTP de libros contra /api/books
 ├── lookup.api.ts       HTTP de la búsqueda contra /api/lookup
+├── camera.ts           getUserMedia (único que toca la cámara)
+├── cover-ocr.ts        recorte del recuadro guía + Tesseract (import dinámico)
+├── cover-scanner/      video con recuadro guía; emite el texto leído cada 1 s
 ├── book-list/          lista + filtros (estado, texto, orden)
 ├── book-card/          card: estado, progreso, editar, borrar
-├── book-lookup/        buscador en Google Books dentro del modal de alta
+├── book-lookup/        buscador en Google Books y botón Escanear tapa, en el modal de alta
 ├── book-form/          alta/edición en el modal; errores 422 por campo
 ├── progress-bar/       presentacional: %, páginas, +/-
 ├── status-selector/

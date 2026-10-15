@@ -1,6 +1,6 @@
 # Trabajo Práctico Final — Scriptorium
 
-Un gestor de biblioteca personal: cargás tus libros, les ponés un estado (por leer, leyendo, leído, prestado, no me interesa), registrás por qué página vas y filtrás u ordenás la lista. Al dar de alta un libro podés buscarlo en Google Books para no tipear los datos, y cada libro puede tener portada. Los datos viven en el servidor, en SQLite, y sobreviven a un reinicio.
+Un gestor de biblioteca personal: cargás tus libros, les ponés un estado (por leer, leyendo, leído, prestado, no me interesa), registrás por qué página vas y filtrás u ordenás la lista. Al dar de alta un libro podés buscarlo en Google Books para no tipear los datos, incluso apuntando la cámara a la tapa, y cada libro puede tener portada. Los datos viven en el servidor, en SQLite, y sobreviven a un reinicio.
 
 Es la reconstrucción desde cero de una app que ya tenía (Angular + localStorage, sin backend propio). La usé solo como guía de qué hacía, no como código para copiar: la idea era que esta versión saliera del proceso del curso y no de pegar lo que ya existía.
 
@@ -13,6 +13,7 @@ Cada feature fue un ciclo propio de spec → plan → branch → implementación
 | Núcleo (CRUD, estados, progreso, filtros) | [spec](docs/superpowers/specs/2026-10-07-scriptorium-core-design.md) | [plan](docs/superpowers/plans/2026-10-07-scriptorium-core.md) |
 | Búsqueda en Google Books | [spec](docs/superpowers/specs/2026-10-12-google-books-lookup-design.md) | [plan](docs/superpowers/plans/2026-10-12-google-books-lookup.md) |
 | Portadas | [spec](docs/superpowers/specs/2026-10-13-portadas-design.md) | [plan](docs/superpowers/plans/2026-10-13-portadas.md) |
+| Escaneo de la tapa con la cámara | [spec](docs/superpowers/specs/2026-10-14-escaneo-tapa-design.md) | [plan](docs/superpowers/plans/2026-10-14-escaneo-tapa.md) |
 
 - El contrato entre interfaz y servidor es [api/openapi.yaml](api/openapi.yaml).
 - Las decisiones de arquitectura y las reglas para el agente están en [CLAUDE.md](CLAUDE.md), desde el primer commit.
@@ -75,6 +76,8 @@ Las decisiones salieron del brainstorming de cada ciclo, respondiendo de a una p
 **Google Books detrás de la API, no desde el navegador.** Llamar a Google directo desde el front habría expuesto la key y le habría quitado sentido al backend. El buscador se inyecta en `createApp`, como la db, así los tests nunca tocan la red. Solo Google (sin el fallback a OpenLibrary del original), sin caché, y la búsqueda se dispara con Enter o con el botón, no mientras se tipea, para no gastar cuota.
 
 **De la portada solo la URL.** Descargar las imágenes o hacer de proxy habría sumado almacenamiento y otro endpoint. Guardo `coverUrl`, el navegador la carga y, si falla, la card muestra un placeholder. La URL se valida (`http`/`https`, máximo 2000 caracteres) para que no entre un `javascript:`. Para agregar la columna a una base existente elegí un `ALTER TABLE` idempotente al arrancar y no un sistema de migraciones: para una columna alcanza.
+
+**OCR en el navegador con Tesseract.js, no un modelo propio.** Entrenar un OCR habría pedido un dataset de tapas etiquetadas y horas de GPU para terminar leyendo peor que un modelo ya entrenado. La cámara se lee en vivo, sin sacar foto: cada segundo se pasa al OCR la zona del recuadro guía y el texto reemplaza la consulta del buscador; yo decido cuándo buscar. No detecta solo cuándo el texto se estabilizó, para que entrara en media hora. Los cuadros no salen del navegador, la API no cambió y Tesseract se carga recién al abrir la cámara. Este ciclo lo ejecuté en la sesión principal, sin un subagente por tarea, por tiempo, con una revisión de la rama al final.
 
 ## Cómo gestioné el contexto
 

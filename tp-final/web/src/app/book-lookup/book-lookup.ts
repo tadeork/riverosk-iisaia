@@ -15,6 +15,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, of, Subject, switchMap } from 'rxjs';
 import { toUiError } from '../api-error';
 import { BookCandidate } from '../book.model';
+import { CoverScannerComponent } from '../cover-scanner/cover-scanner';
 import { LookupApi } from '../lookup.api';
 
 type LookupState =
@@ -28,6 +29,7 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
 
 @Component({
   selector: 'app-book-lookup',
+  imports: [CoverScannerComponent],
   styleUrl: './book-lookup.scss',
   template: `
     <div class="lookup">
@@ -44,7 +46,14 @@ const GOOGLE_ERROR = 'No se pudo consultar Google Books. Probá de nuevo o carga
         <button type="button" class="search" [disabled]="!canSearch()" (click)="search()">
           Buscar
         </button>
+        <button type="button" class="scan" (click)="scanning.set(!scanning())">
+          {{ scanning() ? 'Cerrar cámara' : 'Escanear tapa' }}
+        </button>
       </div>
+
+      @if (scanning()) {
+        <app-cover-scanner (text)="onScanned($event)" />
+      }
 
       @switch (state().kind) {
         @case ('loading') {
@@ -95,6 +104,7 @@ export class BookLookupComponent {
 
   protected readonly query = signal('');
   protected readonly state = signal<LookupState>({ kind: 'idle' });
+  protected readonly scanning = signal(false);
 
   protected readonly canSearch = computed(
     () => this.query().trim() !== '' && this.state().kind !== 'loading',
@@ -138,9 +148,16 @@ export class BookLookupComponent {
   protected search(): void {
     const q = this.query().trim();
     if (!q) return;
+    this.scanning.set(false);
     // Enter durante la carga está permitido: switchMap cancela el request anterior.
     this.state.set({ kind: 'loading' });
     this.search$.next(q);
+  }
+
+  /** Texto leído de la tapa: una sola línea, sin espacios de sobra y dentro del límite del input. */
+  protected onScanned(raw: string): void {
+    const text = raw.replace(/\s+/g, ' ').trim().slice(0, 200);
+    if (text) this.query.set(text);
   }
 
   /** URLs de miniaturas que no cargaron: se muestra el hueco en lugar de la imagen rota. */
