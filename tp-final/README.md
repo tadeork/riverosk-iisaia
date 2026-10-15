@@ -14,6 +14,7 @@ Cada feature fue un ciclo propio de spec → plan → branch → implementación
 | Búsqueda en Google Books | [spec](docs/superpowers/specs/2026-10-12-google-books-lookup-design.md) | [plan](docs/superpowers/plans/2026-10-12-google-books-lookup.md) |
 | Portadas | [spec](docs/superpowers/specs/2026-10-13-portadas-design.md) | [plan](docs/superpowers/plans/2026-10-13-portadas.md) |
 | Escaneo de la tapa con la cámara | [spec](docs/superpowers/specs/2026-10-14-escaneo-tapa-design.md) | [plan](docs/superpowers/plans/2026-10-14-escaneo-tapa.md) |
+| Deploy en Render | [spec](docs/superpowers/specs/2026-10-14-deploy-render-design.md) | [plan](docs/superpowers/plans/2026-10-14-deploy-render.md) |
 
 - El contrato entre interfaz y servidor es [api/openapi.yaml](api/openapi.yaml).
 - Las decisiones de arquitectura y las reglas para el agente están en [CLAUDE.md](CLAUDE.md), desde el primer commit.
@@ -45,7 +46,24 @@ cd web && npx ng serve
 
 Después abrí http://localhost:4200. El servidor de desarrollo de Angular redirige `/api` a `http://localhost:3000`.
 
-Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `data/scriptorium.db`; el archivo SQLite se crea solo). `GOOGLE_BOOKS_API_KEY` es opcional: sin ella se usa la cuota pública de Google, más limitada. Tests: `npm test` en `api/` y `npx ng test --watch=false` en `web/`.
+Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `data/scriptorium.db`; el archivo SQLite se crea solo). `WEB_DIR` es opcional: si apunta al build de Angular, la API también sirve el front (así corre en Render). `GOOGLE_BOOKS_API_KEY` es opcional: sin ella se usa la cuota pública de Google, más limitada. Tests: `npm test` en `api/` y `npx ng test --watch=false` en `web/`.
+
+## Deploy
+
+La app se publica en Render como un solo servicio: Express sirve la API y el build de Angular, así que front y API comparten dominio y no hace falta CORS. Se creó con el CLI de Render:
+
+```bash
+render services create --name scriptorium --type web_service --runtime node --plan free \
+  --repo https://github.com/tadeork/riverosk-iisaia --branch main --root-directory tp-final \
+  --build-command "cd api && npm ci && cd ../web && npm ci && npx ng build" \
+  --start-command "cd api && npm start" --health-check-path /api/books \
+  --env-var NODE_VERSION=24 --env-var WEB_DIR=../web/dist/web/browser \
+  --env-var GOOGLE_BOOKS_API_KEY="$GOOGLE_BOOKS_API_KEY"
+```
+
+La key sale del entorno de quien corre el comando; no está en el repo.
+
+Límites del plan gratis: el disco es efímero, así que **los libros se borran** cuando Render redeploya, reinicia o apaga el servicio (después de 15 minutos sin tráfico), y la primera visita después de que se apaga tarda alrededor de un minuto. Para la demo alcanza. Para guardar datos de verdad haría falta un disco persistente, que es pago.
 
 ## Arquitectura
 
@@ -76,6 +94,8 @@ Las decisiones salieron del brainstorming de cada ciclo, respondiendo de a una p
 **Google Books detrás de la API, no desde el navegador.** Llamar a Google directo desde el front habría expuesto la key y le habría quitado sentido al backend. El buscador se inyecta en `createApp`, como la db, así los tests nunca tocan la red. Solo Google (sin el fallback a OpenLibrary del original), sin caché, y la búsqueda se dispara con Enter o con el botón, no mientras se tipea, para no gastar cuota.
 
 **De la portada solo la URL.** Descargar las imágenes o hacer de proxy habría sumado almacenamiento y otro endpoint. Guardo `coverUrl`, el navegador la carga y, si falla, la card muestra un placeholder. La URL se valida (`http`/`https`, máximo 2000 caracteres) para que no entre un `javascript:`. Para agregar la columna a una base existente elegí un `ALTER TABLE` idempotente al arrancar y no un sistema de migraciones: para una columna alcanza.
+
+**Deploy con SQLite efímero y no con localStorage.** Para no perder los datos en el plan gratis de Render consideré guardar los libros en el navegador, pero eso dejaba al backend sin persistencia, que es lo que pide la consigna y lo que diferencia esta versión del original. Preferí un deploy que pierde los datos al reiniciarse antes que uno que no cumple la forma del trabajo.
 
 **OCR en el navegador con Tesseract.js, no un modelo propio.** Entrenar un OCR habría pedido un dataset de tapas etiquetadas y horas de GPU para terminar leyendo peor que un modelo ya entrenado. La cámara se lee en vivo, sin sacar foto: cada segundo se pasa al OCR la zona del recuadro guía y el texto reemplaza la consulta del buscador; yo decido cuándo buscar. No detecta solo cuándo el texto se estabilizó, para que entrara en media hora. Los cuadros no salen del navegador, la API no cambió y Tesseract se carga recién al abrir la cámara. Este ciclo lo ejecuté en la sesión principal, sin un subagente por tarea, por tiempo, con una revisión de la rama al final.
 
