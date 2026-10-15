@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import type { Worker } from 'tesseract.js';
+import { wordsToText } from './ocr-text';
 
 /** Zona del recuadro guía, en proporción del cuadro de video. */
 const GUIDE_WIDTH = 0.8;
@@ -31,7 +32,11 @@ export class CoverOcr {
         this.worker = undefined;
         throw e;
       });
-    const { data } = await (await this.worker).recognize(canvas);
-    return data.text;
+    // Se piden los bloques para tener la confianza de cada palabra.
+    const { data } = await (await this.worker).recognize(canvas, {}, { blocks: true });
+    const words = (data.blocks ?? []).flatMap((b) =>
+      b.paragraphs.flatMap((p) => p.lines.flatMap((l) => l.words)),
+    );
+    return wordsToText(words);
   }
 }
