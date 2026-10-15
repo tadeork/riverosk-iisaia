@@ -10,6 +10,8 @@ Gestor de biblioteca personal: API Express + SQLite (`api/`) y frontend Angular 
 - Plan de portadas: [docs/superpowers/plans/2026-10-13-portadas.md](docs/superpowers/plans/2026-10-13-portadas.md)
 - Spec del escaneo de la tapa: [docs/superpowers/specs/2026-10-14-escaneo-tapa-design.md](docs/superpowers/specs/2026-10-14-escaneo-tapa-design.md)
 - Plan del escaneo de la tapa: [docs/superpowers/plans/2026-10-14-escaneo-tapa.md](docs/superpowers/plans/2026-10-14-escaneo-tapa.md)
+- Spec del deploy en Render: [docs/superpowers/specs/2026-10-14-deploy-render-design.md](docs/superpowers/specs/2026-10-14-deploy-render-design.md)
+- Plan del deploy en Render: [docs/superpowers/plans/2026-10-14-deploy-render.md](docs/superpowers/plans/2026-10-14-deploy-render.md)
 
 ## Decisiones
 
@@ -24,6 +26,7 @@ Gestor de biblioteca personal: API Express + SQLite (`api/`) y frontend Angular 
 | Filtrado/orden | En el servidor (query params `status`, `q`, `sort`) |
 | Actualización | `PATCH` parcial |
 | Portadas | Solo la URL (`coverUrl`); Google o a mano; placeholder si falla |
+| Deploy | Render gratis, un servicio: Express sirve `/api` y el build de Angular (`WEB_DIR`); SQLite efímero |
 | Escaneo de la tapa | OCR en vivo en el navegador (Tesseract.js, `spa`), 1 lectura/s; el texto va a la consulta del buscador |
 
 Estados: `to-read` (default) | `reading` | `read` | `borrowed` | `not-interested`.
@@ -39,7 +42,7 @@ api/
     ├── books.schema.ts zod: body de POST/PATCH y query de GET
     ├── books.routes.ts HTTP -> repo; reglas de negocio; mapeo a errores
     ├── lookup/         búsqueda en Google Books: adaptador y ruta GET /api/lookup
-    ├── app.ts          crea la app Express recibiendo la db y el buscador (sin listen)
+    ├── app.ts          crea la app Express recibiendo la db, el buscador y, opcional, la carpeta del front (sin listen)
     └── server.ts       entrypoint: abre la db en disco y hace listen
 web/src/app/
 ├── books.api.ts        HTTP de libros contra /api/books
@@ -63,7 +66,7 @@ web/src/app/
 - En el front solo los archivos `*.api.ts` hacen HTTP.
 - TDD: cada test se ve fallar antes de escribir el código.
 - Commits `TP final: ...`, sin Co-Authored-By.
-- Variables de entorno de la API: `PORT` (default `3000`), `DB_PATH` (default `data/scriptorium.db`), `GOOGLE_BOOKS_API_KEY` (opcional).
+- Variables de entorno de la API: `PORT` (default `3000`), `DB_PATH` (default `data/scriptorium.db`), `GOOGLE_BOOKS_API_KEY` (opcional), `WEB_DIR` (opcional: carpeta del build de Angular que la API sirve, con fallback a `index.html` para lo que no es `/api`).
 
 ## Comandos
 
