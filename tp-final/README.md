@@ -50,7 +50,7 @@ Variables de entorno de la API: `PORT` (default `3000`) y `DB_PATH` (default `da
 
 ## Deploy
 
-La app se publica en Render como un solo servicio: Express sirve la API y el build de Angular, así que front y API comparten dominio y no hace falta CORS. El servicio se crea con el CLI de Render:
+Publicada en **https://scriptorium-gty6.onrender.com** (Render, plan gratis). Es un solo servicio: Express sirve la API y el build de Angular, así que front y API comparten dominio y no hace falta CORS. El servicio se crea con el CLI de Render:
 
 ```bash
 render services create --name scriptorium --type web_service --runtime node --plan free \
