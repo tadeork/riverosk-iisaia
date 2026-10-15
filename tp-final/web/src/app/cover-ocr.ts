@@ -6,11 +6,21 @@ import { wordsToText } from './ocr-text';
 const GUIDE_WIDTH = 0.8;
 const GUIDE_HEIGHT = 0.4;
 
+type TesseractModule = Pick<typeof import('tesseract.js'), 'createWorker'>;
+
+/**
+ * tesseract.js es CommonJS. ng serve expone sus exports con nombre, pero el build de producción
+ * solo trae `default`: sin esto, `createWorker` llega undefined y el OCR falla solo en producción.
+ */
+export function unwrapCjs<T>(mod: T | { default: T }): T {
+  return typeof mod === 'object' && mod !== null && 'default' in mod ? mod.default : mod;
+}
+
 /** Carga de Tesseract: import dinámico, para no sumarlo al bundle inicial. En los tests se reemplaza. */
-export const TESSERACT = new InjectionToken<() => Promise<Pick<typeof import('tesseract.js'), 'createWorker'>>>(
-  'TESSERACT',
-  { providedIn: 'root', factory: () => () => import('tesseract.js') },
-);
+export const TESSERACT = new InjectionToken<() => Promise<TesseractModule>>('TESSERACT', {
+  providedIn: 'root',
+  factory: () => () => import('tesseract.js').then((m) => unwrapCjs<TesseractModule>(m)),
+});
 
 /** Única pieza que conoce Tesseract y el canvas: en los tests se reemplaza por un falso. */
 @Injectable({ providedIn: 'root' })
