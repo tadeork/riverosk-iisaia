@@ -1,5 +1,14 @@
 # Trabajo Práctico Final — Scriptorium
 
+
+### Integrantes:
+
+- a2536	Tadeo	Riveros
+- a2537	Marcos Levi	Riveros Koloszwa
+
+---
+
+
 Un gestor de biblioteca personal: cargás tus libros, les ponés un estado (por leer, leyendo, leído, prestado, no me interesa), registrás por qué página vas y filtrás u ordenás la lista. Al dar de alta un libro podés buscarlo en Google Books para no tipear los datos, incluso apuntando la cámara a la tapa, y cada libro puede tener portada. Los datos viven en el servidor, en SQLite, y sobreviven a un reinicio.
 
 Es la reconstrucción desde cero de una app que ya tenía (Angular + localStorage, sin backend propio). La usé solo como guía de qué hacía, no como código para copiar: la idea era que esta versión saliera del proceso del curso y no de pegar lo que ya existía.
