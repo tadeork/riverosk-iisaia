@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, InjectionToken } from '@angular/core';
 import type { Worker } from 'tesseract.js';
 import { wordsToText } from './ocr-text';
 
@@ -6,9 +6,16 @@ import { wordsToText } from './ocr-text';
 const GUIDE_WIDTH = 0.8;
 const GUIDE_HEIGHT = 0.4;
 
+/** Carga de Tesseract: import dinámico, para no sumarlo al bundle inicial. En los tests se reemplaza. */
+export const TESSERACT = new InjectionToken<() => Promise<Pick<typeof import('tesseract.js'), 'createWorker'>>>(
+  'TESSERACT',
+  { providedIn: 'root', factory: () => () => import('tesseract.js') },
+);
+
 /** Única pieza que conoce Tesseract y el canvas: en los tests se reemplaza por un falso. */
 @Injectable({ providedIn: 'root' })
 export class CoverOcr {
+  private readonly tesseract = inject(TESSERACT);
   // Se crea en la primera lectura y se reutiliza: reabrir la cámara no recarga el modelo.
   private worker?: Promise<Worker>;
 
@@ -26,8 +33,15 @@ export class CoverOcr {
       ?.drawImage(video, (videoWidth - width) / 2, (videoHeight - height) / 2, width, height, 0, 0, width, height);
 
     // Si falla la creación (por ejemplo, sin red para bajar el modelo), la próxima lectura reintenta.
-    this.worker ??= import('tesseract.js')
-      .then(({ createWorker }) => createWorker('spa'))
+    // tesseract.js 7 no rechaza createWorker cuando falla la carga del idioma: solo avisa por
+    // errorHandler. Sin esto, la promesa quedaría colgada y nunca se vería el error.
+    this.worker ??= this.tesseract()
+      .then(
+        ({ createWorker }) =>
+          new Promise<Worker>((resolve, reject) => {
+            createWorker('spa', undefined, { errorHandler: reject }).then(resolve, reject);
+          }),
+      )
       .catch((e: unknown) => {
         this.worker = undefined;
         throw e;
