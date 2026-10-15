@@ -51,7 +51,7 @@ Al agregar un libro, el usuario abre la cámara, apunta a la tapa y el texto que
 
 ### Errores
 
-- Permiso negado o sin cámara: "No se pudo abrir la cámara. Revisá el permiso del navegador o buscá a mano." El botón vuelve a **Escanear tapa**.
+- Permiso negado o sin cámara: "No se pudo abrir la cámara. Revisá el permiso del navegador o buscá a mano." El mensaje se ve en el lugar del video hasta que el usuario aprieta **Cerrar cámara**.
 - Falla una lectura del OCR, por ejemplo porque no se pudo descargar el modelo: se muestra "No se pudo leer la tapa." y la cámara sigue abierta. La lectura siguiente vuelve a intentar.
 
 ## Testing
