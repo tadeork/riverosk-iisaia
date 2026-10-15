@@ -1,7 +1,7 @@
 # Scriptorium — Escaneo de la tapa con la cámara (diseño)
 
 Fecha: 2026-10-14
-Estado: diseño aprobado en el chat (botón en el alta que abre la cámara, OCR en vivo con Tesseract.js, sin foto). Los detalles marcados como "agregado" los propuso el modelo y falta que el usuario los revise en este spec.
+Estado: diseño aprobado en el chat (botón en el alta que abre la cámara, OCR en vivo con Tesseract.js, sin foto). Los detalles marcados como "agregado" los propuso el modelo; el usuario los aprobó al revisar este spec.
 Ciclos anteriores, todos mergeados:
 - `2026-10-07-scriptorium-core-design.md` (núcleo);
 - `2026-10-12-google-books-lookup-design.md` (búsqueda en Google Books);
